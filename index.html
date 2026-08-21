@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Kasir - Kintoun Cafe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col" onload="initDashboard()">
+
+    <!-- HEADER -->
+    <header class="bg-amber-700 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-10">
+        <div>
+            <h1 class="text-xl font-bold">Kintoun Cafe - Kasir</h1>
+            <p class="text-xs text-amber-200">Auto-refresh setiap 10 detik</p>
+        </div>
+        <div class="flex items-center space-x-4">
+            <span id="statusConnection" class="text-sm font-semibold bg-green-500 px-3 py-1 rounded-full">Online</span>
+            <button onclick="fetchOrders()" class="bg-amber-600 hover:bg-amber-800 px-4 py-2 rounded text-sm font-bold transition">Refresh Manual</button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT: DAFTAR PESANAN -->
+    <main class="flex-grow p-4 md:p-6">
+        <!-- Container Grid untuk Card Pesanan -->
+        <div id="ordersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <p class="text-gray-500 col-span-full text-center py-10">Memuat data pesanan...</p>
+        </div>
+    </main>
+
+    <!-- LOADING OVERLAY UNTUK UPDATE STATUS -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-30 hidden flex justify-center items-center z-50">
+        <div class="bg-white p-4 rounded-lg shadow-lg">
+            <p class="font-bold text-amber-700">Memperbarui Status...</p>
+        </div>
+    </div>
+
+<script>
+    // --- KONFIGURASI ---
+    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygdcHwVBz0ihp3cYKqd1wf7NFK6h0OMYd-O95bkWpCgwP7Xb8taQKMZSX15ovy3cz8mA/exec';
+    
+    let knownOrdersCount = 0; // Untuk mendeteksi pesanan baru
+    let audioContext = null;
+
+    // --- FUNGSI NOTIFIKASI SUARA (BEEP / DING) ---
+    // Menggunakan Web Audio API (Tidak butuh file mp3 eksternal)
+    function playDing() {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        // Browser modern butuh interaksi user pertama kali untuk play audio, 
+        // tapi jika sudah jalan, akan otomatis.
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.type = 'sine'; // Tipe gelombang suara
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // Nada
+        
+        gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5); // Durasi fade out
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+    }
+
+    // --- FUNGSI MENGAMBIL DATA PESANAN ---
+    async function fetchOrders() {
+        document.getElementById('statusConnection').innerText = 'Syncing...';
+        document.getElementById('statusConnection').className = 'text-sm font-semibold bg-yellow-500 text-white px-3 py-1 rounded-full';
+
+        try {
+            const response = await fetch(GAS_WEB_APP_URL);
+            const orders = await response.json();
+            
+            // Filter pesanan dari bawah ke atas (terbaru di atas)
+            const reversedOrders = orders.reverse();
+            
+            renderOrders(reversedOrders);
+
+            // Cek apakah ada pesanan baru
+            if (knownOrdersCount !== 0 && orders.length > knownOrdersCount) {
+                playDing(); // Bunyikan suara
+            }
+            knownOrdersCount = orders.length;
+
+            document.getElementById('statusConnection').innerText = 'Online';
+            document.getElementById('statusConnection').className = 'text-sm font-semibold bg-green-500 px-3 py-1 rounded-full';
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            document.getElementById('statusConnection').innerText = 'Offline';
+            document.getElementById('statusConnection').className = 'text-sm font-semibold bg-red-500 px-3 py-1 rounded-full';
+        }
+    }
+
+    // --- RENDER UI CARD PESANAN ---
+    function renderOrders(orders) {
+        const container = document.getElementById('ordersContainer');
+        
+        if (orders.length === 0) {
+            container.innerHTML = `<p class="text-gray-500 col-span-full text-center py-10">Belum ada pesanan.</p>`;
+            return;
+        }
+
+        let html = '';
+        orders.forEach(order => {
+            // Jangan tampilkan yang sudah "Selesai" untuk menghemat layar kasir
+            // Jika ingin menampilkan semua, hapus blok IF di bawah ini.
+            if(order.status === 'Selesai') return; 
+
+            // Format pesanan text (mengganti newline dengan <br>)
+            const orderListHtml = order.orders.replace(/\n/g, '<br>');
+
+            // Warna Badge Status
+            let statusBadge = 'bg-red-100 text-red-800 border-red-200'; // Default: Pesanan Masuk
+            if (order.status === 'Sedang Diproses') statusBadge = 'bg-blue-100 text-blue-800 border-blue-200';
+            
+            html += `
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                <div class="${order.status === 'Pesanan Masuk' ? 'bg-red-50' : 'bg-gray-50'} p-3 border-b border-gray-200 flex justify-between items-center">
+                    <div>
+                        <span class="font-bold text-sm text-gray-800">${order.id}</span>
+                        <p class="text-xs text-gray-500">${order.timestamp}</p>
+                    </div>
+                    <span class="px-2 py-1 rounded text-xs font-bold border ${statusBadge}">${order.status}</span>
+                </div>
+                
+                <div class="p-4 flex-grow text-sm">
+                    <p class="font-bold text-lg mb-1">${order.name}</p>
+                    <p class="text-gray-600 mb-2">📞 ${order.wa}</p>
+                    <div class="bg-gray-50 p-2 rounded border border-gray-100 mb-3">
+                        <p class="font-semibold text-xs text-gray-500 uppercase tracking-wider mb-1">Alamat Delivery:</p>
+                        <p class="text-gray-700">${order.address}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <p class="font-semibold text-xs text-gray-500 uppercase tracking-wider mb-1">Detail Pesanan:</p>
+                        <p class="text-gray-800 font-medium leading-relaxed">${orderListHtml}</p>
+                    </div>
+
+                    <div class="flex justify-between items-end mt-4 pt-4 border-t border-gray-100">
+                        <div>
+                            <p class="text-xs text-gray-500">Total Harga:</p>
+                            <p class="font-bold text-amber-600 text-lg">Rp ${order.total.toLocaleString('id-ID')}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-gray-500">Metode:</p>
+                            <p class="font-bold text-gray-700">${order.payment}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-gray-50 border-t border-gray-200 flex flex-col space-y-2">
+                    ${order.payment === 'Transfer BCA' && order.proofUrl ? `<a href="${order.proofUrl}" target="_blank" class="w-full text-center bg-white border border-gray-300 text-gray-700 py-1.5 rounded text-sm font-semibold hover:bg-gray-100 transition">Lihat Bukti Transfer</a>` : ''}
+                    
+                    ${order.status === 'Pesanan Masuk' ? `<button onclick="updateStatus('${order.id}', 'Sedang Diproses')" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold hover:bg-blue-700 transition">Proses Pesanan Ini</button>` : ''}
+                    
+                    ${order.status === 'Sedang Diproses' ? `<button onclick="updateStatus('${order.id}', 'Selesai')" class="w-full bg-green-600 text-white py-2 rounded text-sm font-bold hover:bg-green-700 transition">Tandai Selesai & Kirim</button>` : ''}
+                </div>
+            </div>`;
+        });
+        
+        if(html === '') {
+            container.innerHTML = `<p class="text-gray-500 col-span-full text-center py-10">Semua pesanan sudah selesai dikerjakan.</p>`;
+        } else {
+            container.innerHTML = html;
+        }
+    }
+
+    // --- FUNGSI UPDATE STATUS KE GOOGLE SHEETS ---
+    async function updateStatus(orderId, newStatus) {
+        if(!confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) return;
+
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+
+        try {
+            const payload = {
+                action: 'update_status',
+                orderId: orderId,
+                newStatus: newStatus
+            };
+
+            const response = await fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            
+            const result = await response.json();
+            if (result.status === 'success') {
+                await fetchOrders(); // Refresh data setelah update berhasil
+            } else {
+                alert('Gagal update status. Coba lagi.');
+            }
+        } catch (error) {
+            alert('Terjadi kesalahan koneksi.');
+        } finally {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+    }
+
+    // --- INISIALISASI & AUTO-POLLING ---
+    function initDashboard() {
+        // Harus ada interaksi klik di halaman (meski sembarang tempat) agar browser mengizinkan audio berjalan.
+        document.body.addEventListener('click', () => {
+            if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }, { once: true });
+
+        fetchOrders(); // Tarik data pertama kali
+        
+        // Auto-refresh setiap 10 detik (10000 ms)
+        setInterval(fetchOrders, 10000); 
+    }
+</script>
+</body>
+</html>
