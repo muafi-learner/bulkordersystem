@@ -4,78 +4,161 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kintoun Cafe - Delivery Order</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Injeksi Color Palette Khusus
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00263F',      // Midnight Blue
+                        ivory: '#EEEBE1',        // Ivory White
+                        taupe: '#908371',        // Warm Taupe
+                        secondary: '#3C586D',    // Secondary Blue
+                        coolGrey: '#C0C9CE',     // Cool Grey
+                        muted: '#B8AD98',        // Muted Beige
+                        lightBeige: '#D6CFBF',   // Light Beige
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Sembunyikan scrollbar untuk tampilan yang lebih sleek */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans p-4 md:p-8 max-w-md mx-auto">
+<body class="bg-ivory text-primary font-sans pb-24">
 
-    <!-- HEADER -->
-    <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-amber-700">Kintoun Cafe</h1>
-        <p class="text-sm text-gray-500">Delivery Order System</p>
-    </div>
+    <!-- HEADER / HERO -->
+    <header class="bg-primary text-ivory py-8 px-6 rounded-b-3xl shadow-md mb-6">
+        <h1 class="text-2xl font-bold tracking-tight">Kintoun Cafe</h1>
+        <p class="text-coolGrey text-sm mt-1 font-medium">Delivery Order System</p>
+    </header>
 
-    <!-- DATA PELANGGAN -->
-    <div class="bg-white p-5 rounded-xl shadow-sm mb-6 border border-gray-100">
-        <h2 class="text-lg font-semibold mb-4 border-b pb-2">Data Pengiriman</h2>
-        <input type="text" id="custName" placeholder="Nama Lengkap" class="w-full mb-3 p-3 border rounded-lg outline-none focus:border-amber-500">
-        <input type="number" id="custWA" placeholder="Nomor WhatsApp (Cth: 0812...)" class="w-full mb-3 p-3 border rounded-lg outline-none focus:border-amber-500">
-        <textarea id="custAddress" placeholder="Alamat Pengiriman Lengkap" class="w-full p-3 border rounded-lg outline-none focus:border-amber-500 h-24"></textarea>
-    </div>
+    <main class="max-w-md mx-auto px-4">
+        
+        <!-- DATA PELANGGAN (Desain Sleek) -->
+        <section class="mb-8">
+            <h2 class="text-sm font-bold text-taupe uppercase tracking-wider mb-4">Informasi Pengiriman</h2>
+            <div class="space-y-4 bg-white p-6 rounded-2xl shadow-sm border border-lightBeige">
+                <div>
+                    <input type="text" id="custName" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-sm font-medium" placeholder="Nama Lengkap">
+                </div>
+                <div>
+                    <input type="number" id="custWA" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-sm font-medium" placeholder="Nomor WhatsApp (Cth: 0812...)">
+                </div>
+                <div>
+                    <textarea id="custAddress" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-sm font-medium resize-none h-14" placeholder="Alamat Pengiriman Lengkap"></textarea>
+                </div>
+            </div>
+        </section>
 
-    <!-- MENU CONTAINER -->
-    <div id="menuContainer" class="mb-6"></div>
+        <!-- MENU CONTAINER -->
+        <section id="menuContainer" class="mb-10"></section>
+    </main>
 
-    <!-- CART & TOTAL -->
-    <div class="bg-white p-5 rounded-xl shadow-sm mb-20 border border-gray-100">
-        <div class="flex justify-between items-center mb-4">
-            <span class="font-semibold">Total Pesanan:</span>
-            <span id="totalPrice" class="text-xl font-bold text-amber-600">Rp 0</span>
+    <!-- FLOATING CART BUTTON -->
+    <div id="floatingCart" class="fixed bottom-0 left-0 w-full p-4 bg-ivory bg-opacity-90 backdrop-blur-md border-t border-lightBeige hidden z-40">
+        <div class="max-w-md mx-auto">
+            <button onclick="openCartModal()" class="w-full bg-primary text-ivory font-semibold py-4 rounded-xl shadow-lg flex justify-between items-center px-6 hover:bg-secondary transition">
+                <div class="flex flex-col text-left">
+                    <span id="floatingTotalItems" class="text-xs text-coolGrey">0 Item</span>
+                    <span id="floatingTotalPrice" class="text-lg font-bold">Rp 0</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span>Lihat Keranjang</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </div>
+            </button>
         </div>
-        <button onclick="proceedToPayment()" class="w-full bg-amber-600 text-white font-bold py-3 rounded-lg hover:bg-amber-700 transition">Checkout Sekarang</button>
     </div>
 
-    <!-- MODAL PEMBAYARAN (Tersembunyi secara default) -->
-    <div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 class="text-xl font-bold mb-4">Pilih Pembayaran</h2>
+    <!-- CART & PAYMENT MODAL -->
+    <div id="cartModal" class="fixed inset-0 bg-primary bg-opacity-40 backdrop-blur-sm hidden flex-col justify-end z-50 transition-opacity">
+        <div class="bg-ivory w-full max-w-md mx-auto h-[85vh] rounded-t-3xl shadow-2xl flex flex-col animate-slide-up relative">
             
-            <select id="paymentMethod" onchange="togglePaymentUI()" class="w-full p-3 border rounded-lg mb-4">
-                <option value="">-- Pilih Metode --</option>
-                <option value="Transfer BCA">Transfer Bank (BCA)</option>
-                <option value="QRIS">QRIS (Manual via Kasir)</option>
-            </select>
-
-            <!-- UI BCA -->
-            <div id="uiBCA" class="hidden mb-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                <p class="text-sm text-gray-700 mb-2">Transfer ke Rekening BCA:</p>
-                <p class="font-bold text-lg mb-1">1234567890</p>
-                <p class="text-sm font-semibold mb-4 text-gray-800">a.n Kintoun Cafe</p>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Bukti Transfer</label>
-                <input type="file" id="uploadProof" accept="image/*" class="w-full text-sm">
+            <!-- Modal Header -->
+            <div class="px-6 py-5 border-b border-lightBeige flex justify-between items-center bg-white rounded-t-3xl">
+                <h2 class="text-lg font-bold text-primary">Detail Pesanan</h2>
+                <button onclick="closeCartModal()" class="text-muted hover:text-primary font-bold p-2">✕</button>
             </div>
 
-            <!-- UI QRIS -->
-            <div id="uiQRIS" class="hidden mb-4 bg-green-50 p-4 rounded-lg border border-green-100 text-center">
-                <p class="text-sm font-medium text-green-800 mb-2">Pesanan kamu sedang diproses oleh Kasir.</p>
-                <p class="text-xs text-gray-600">Silakan lanjut submit, lalu klik tombol Chat WA setelah ini untuk meminta kode QRIS dari kasir kami.</p>
+            <!-- Modal Body (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <!-- List Keranjang -->
+                <div id="cartItemsContainer" class="space-y-4 mb-8">
+                    <!-- Item keranjang dirender di sini via JS -->
+                </div>
+
+                <!-- Payment Section -->
+                <div class="border-t border-lightBeige pt-6">
+                    <h3 class="text-sm font-bold text-taupe uppercase tracking-wider mb-3">Metode Pembayaran</h3>
+                    <select id="paymentMethod" onchange="togglePaymentUI()" class="w-full p-3 bg-white border border-lightBeige rounded-xl text-sm font-medium text-primary outline-none focus:border-secondary mb-4 shadow-sm">
+                        <option value="">-- Pilih Pembayaran --</option>
+                        <option value="Transfer BCA">Transfer Bank (BCA)</option>
+                        <option value="QRIS">QRIS (Manual via Kasir)</option>
+                    </select>
+
+                    <!-- UI BCA -->
+                    <div id="uiBCA" class="hidden mb-4 bg-white p-5 rounded-xl border border-lightBeige shadow-sm">
+                        
+                        <!-- Alert Wording -->
+                        <div class="bg-muted bg-opacity-20 border border-muted p-3 rounded-lg mb-4">
+                            <p class="text-xs text-secondary leading-relaxed"><span class="font-bold">⚠️ Perhatian:</span> Untuk mempercepat proses audit toko, mohon pastikan nama pemilik rekening pengirim sama dengan nama pada form pengiriman.</p>
+                        </div>
+
+                        <p class="text-xs text-taupe mb-1">Transfer ke Rekening BCA:</p>
+                        <p class="font-bold text-xl text-primary mb-1">1234567890</p>
+                        <p class="text-sm font-semibold mb-4 text-secondary">a.n Kintoun Cafe</p>
+                        
+                        <label class="block text-xs font-bold text-taupe uppercase tracking-wider mb-2">Upload Bukti Transfer</label>
+                        <input type="file" id="uploadProof" accept="image/*" class="w-full text-sm text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-ivory hover:file:bg-secondary">
+                    </div>
+
+                    <!-- UI QRIS -->
+                    <div id="uiQRIS" class="hidden mb-4 bg-white p-5 rounded-xl border border-lightBeige shadow-sm text-center">
+                        <p class="text-sm font-semibold text-primary mb-2">Checkout sekarang, bayar nanti.</p>
+                        <p class="text-xs text-secondary leading-relaxed">Pesanan Anda akan masuk ke sistem kasir. Silakan klik tombol Chat WA setelah ini untuk meminta kode QRIS dari kasir kami.</p>
+                    </div>
+                </div>
             </div>
 
-            <button id="btnSubmitOrder" onclick="submitOrder()" class="w-full bg-gray-800 text-white font-bold py-3 rounded-lg hover:bg-gray-900 transition mb-2 hidden">Konfirmasi & Kirim Pesanan</button>
-            <button onclick="closePaymentModal()" class="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-300 transition">Batal / Kembali</button>
+            <!-- Modal Footer -->
+            <div class="p-6 bg-white border-t border-lightBeige rounded-b-3xl">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="font-bold text-secondary">Total Dibayar</span>
+                    <span id="modalTotalPrice" class="text-2xl font-bold text-primary">Rp 0</span>
+                </div>
+                <button id="btnSubmitOrder" onclick="submitOrder()" class="w-full bg-primary text-ivory font-bold py-4 rounded-xl hover:bg-secondary transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    Proses Pesanan
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- LOADING OVERLAY -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-white bg-opacity-80 hidden flex justify-center items-center z-50">
-        <p class="font-bold text-amber-600 animate-pulse text-xl">Memproses Pesanan...</p>
+    <div id="loadingOverlay" class="fixed inset-0 bg-primary bg-opacity-80 backdrop-blur-sm hidden flex-col justify-center items-center z-[60]">
+        <div class="w-12 h-12 border-4 border-ivory border-t-taupe rounded-full animate-spin mb-4"></div>
+        <p class="font-bold text-ivory tracking-wide">Memproses Pesanan...</p>
     </div>
 
 <script>
     // --- KONFIGURASI PENTING ---
+    // PASTIKAN ANDA MENGGANTI URL INI DENGAN URL WEB APP GAS ANDA!
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygdcHwVBz0ihp3cYKqd1wf7NFK6h0OMYd-O95bkWpCgwP7Xb8taQKMZSX15ovy3cz8mA/exec';
-    const NOMOR_WA_CAFE = '6289509847998'; // Ganti dengan nomor WA Toko (gunakan format 62)
+    const NOMOR_WA_CAFE = '6289509847998'; 
 
-    // Data Menu
     const menuData = [
         { category: 'Kintoun Signature', items: [
             { id: 'S1', name: 'Kopi Susu Kintoun', price: 13545 },
@@ -93,7 +176,8 @@
         ]}
     ];
 
-    let cart = {}; // Format: { "id_leveles": { id, name, price, qty, iceLevel } }
+    // Format Data Cart: { "S1_Normal Ice": { id, name, price, iceLevel, qty } }
+    let cart = {}; 
 
     // Render Menu ke HTML
     function renderMenu() {
@@ -101,89 +185,149 @@
         let html = '';
 
         menuData.forEach(cat => {
-            html += `<h3 class="text-xl font-bold mt-6 mb-3 text-gray-800">${cat.category}</h3>`;
+            html += `<h3 class="text-sm font-bold text-taupe uppercase tracking-wider mt-8 mb-4">${cat.category}</h3>`;
+            html += `<div class="space-y-4">`;
             cat.items.forEach(item => {
                 html += `
-                <div class="bg-white p-4 rounded-xl shadow-sm mb-3 border border-gray-100 flex flex-col">
-                    <div class="flex justify-between items-start mb-2">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-lightBeige flex flex-col relative overflow-hidden group">
+                    <div class="flex justify-between items-start mb-3">
                         <div>
-                            <p class="font-bold text-gray-800">${item.name}</p>
-                            <p class="text-sm text-amber-600">Rp ${item.price.toLocaleString('id-ID')}</p>
+                            <p class="font-bold text-primary text-base">${item.name}</p>
+                            <p class="text-sm font-semibold text-secondary mt-0.5">Rp ${item.price.toLocaleString('id-ID')}</p>
                         </div>
                     </div>
-                    <div class="flex justify-between items-center mt-2">
-                        <select id="ice_${item.id}" class="text-sm border rounded p-1 text-gray-600 outline-none">
+                    
+                    <div class="flex justify-between items-center mt-2 space-x-3">
+                        <select id="ice_${item.id}" class="flex-1 text-sm bg-ivory border border-lightBeige rounded-lg px-2 py-2 text-primary font-medium outline-none focus:border-secondary transition">
                             <option value="Normal Ice">Normal Ice</option>
                             <option value="Less Ice">Less Ice</option>
                             <option value="No Ice">No Ice</option>
                         </select>
-                        <div class="flex items-center space-x-3">
-                            <button onclick="updateCart('${item.id}', '${item.name}', ${item.price}, -1)" class="w-8 h-8 bg-gray-200 rounded-full font-bold text-lg">-</button>
-                            <span id="qty_${item.id}" class="font-bold w-4 text-center">0</span>
-                            <button onclick="updateCart('${item.id}', '${item.name}', ${item.price}, 1)" class="w-8 h-8 bg-amber-100 text-amber-700 rounded-full font-bold text-lg">+</button>
-                        </div>
+                        <button onclick="addToCart('${item.id}', '${item.name}', ${item.price})" class="bg-secondary text-ivory text-sm font-bold px-5 py-2 rounded-lg hover:bg-primary transition shadow-sm">
+                            Tambah
+                        </button>
                     </div>
                 </div>`;
             });
+            html += `</div>`;
         });
         container.innerHTML = html;
     }
 
-    // Logic Keranjang (Cart)
-    function updateCart(id, name, price, change) {
+    // Logic Tambah ke Keranjang (Mendukung Variasi Es)
+    function addToCart(id, name, price) {
         let iceLevel = document.getElementById(`ice_${id}`).value;
         let cartKey = `${id}_${iceLevel}`;
 
         if (!cart[cartKey]) {
-            cart[cartKey] = { id, name, price, qty: 0, iceLevel };
+            cart[cartKey] = { id, name, price, iceLevel, qty: 0 };
         }
-
-        cart[cartKey].qty += change;
-        if (cart[cartKey].qty <= 0) delete cart[cartKey];
-
-        // Update UI Qty (Menampilkan total qty dari item tersebut terlepas dari level es untuk simplicity UI)
-        let totalItemQty = Object.values(cart).filter(i => i.id === id).reduce((sum, i) => sum + i.qty, 0);
-        document.getElementById(`qty_${id}`).innerText = totalItemQty;
-
-        calculateTotal();
+        
+        cart[cartKey].qty += 1;
+        updateFloatingCart();
+        
+        // Animasi feedback sederhana
+        const btn = event.currentTarget;
+        const originalText = btn.innerText;
+        btn.innerText = "✓ Masuk";
+        btn.classList.replace('bg-secondary', 'bg-taupe');
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.classList.replace('bg-taupe', 'bg-secondary');
+        }, 1000);
     }
 
-    function calculateTotal() {
-        let total = Object.values(cart).reduce((sum, item) => sum + (item.price * item.qty), 0);
-        document.getElementById('totalPrice').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+    // Ubah Kuantitas di dalam Modal Keranjang
+    function adjustQty(cartKey, delta) {
+        if (cart[cartKey]) {
+            cart[cartKey].qty += delta;
+            if (cart[cartKey].qty <= 0) {
+                delete cart[cartKey];
+            }
+            updateFloatingCart();
+            renderCartModalItems();
+        }
     }
 
-    // Modal & Payment UI Logic
-    function proceedToPayment() {
+    // Update Floating Button & Total Harga
+    function updateFloatingCart() {
+        let totalItems = 0;
+        let totalPrice = 0;
+
+        Object.values(cart).forEach(item => {
+            totalItems += item.qty;
+            totalPrice += (item.price * item.qty);
+        });
+
+        const floatingCart = document.getElementById('floatingCart');
+        if (totalItems > 0) {
+            floatingCart.classList.remove('hidden');
+            document.getElementById('floatingTotalItems').innerText = `${totalItems} Produk`;
+            document.getElementById('floatingTotalPrice').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
+            document.getElementById('modalTotalPrice').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
+        } else {
+            floatingCart.classList.add('hidden');
+            closeCartModal(); // Tutup modal otomatis jika keranjang kosong
+        }
+    }
+
+    // --- LOGIC MODAL & PEMBAYARAN ---
+    function openCartModal() {
+        // Cek data pelanggan dulu sebelum buka keranjang
         if (!document.getElementById('custName').value || !document.getElementById('custWA').value || !document.getElementById('custAddress').value) {
-            alert('Mohon lengkapi Data Pengiriman terlebih dahulu.'); return;
+            alert('Mohon lengkapi Informasi Pengiriman terlebih dahulu.'); 
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
         }
-        if (Object.keys(cart).length === 0) {
-            alert('Keranjang belanja masih kosong!'); return;
-        }
-        document.getElementById('paymentModal').classList.remove('hidden');
+        
+        renderCartModalItems();
+        document.getElementById('cartModal').classList.remove('hidden');
+        document.getElementById('cartModal').classList.add('flex');
     }
 
-    function closePaymentModal() {
-        document.getElementById('paymentModal').classList.add('hidden');
+    function closeCartModal() {
+        document.getElementById('cartModal').classList.add('hidden');
+        document.getElementById('cartModal').classList.remove('flex');
+    }
+
+    function renderCartModalItems() {
+        const container = document.getElementById('cartItemsContainer');
+        let html = '';
+
+        Object.keys(cart).forEach(key => {
+            let item = cart[key];
+            html += `
+            <div class="flex justify-between items-center py-3 border-b border-lightBeige last:border-0">
+                <div class="flex-1 pr-4">
+                    <p class="font-bold text-primary text-sm">${item.name}</p>
+                    <p class="text-xs text-taupe font-medium mt-0.5">${item.iceLevel}</p>
+                    <p class="text-sm font-semibold text-secondary mt-1">Rp ${(item.price * item.qty).toLocaleString('id-ID')}</p>
+                </div>
+                <div class="flex items-center space-x-3 bg-ivory rounded-lg border border-lightBeige p-1">
+                    <button onclick="adjustQty('${key}', -1)" class="w-7 h-7 flex justify-center items-center rounded text-primary hover:bg-lightBeige font-bold transition">-</button>
+                    <span class="font-bold text-sm text-primary w-4 text-center">${item.qty}</span>
+                    <button onclick="adjustQty('${key}', 1)" class="w-7 h-7 flex justify-center items-center bg-primary text-ivory rounded font-bold hover:bg-secondary transition">+</button>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
     }
 
     function togglePaymentUI() {
         const method = document.getElementById('paymentMethod').value;
+        const btnSubmit = document.getElementById('btnSubmitOrder');
+        
         document.getElementById('uiBCA').classList.add('hidden');
         document.getElementById('uiQRIS').classList.add('hidden');
-        document.getElementById('btnSubmitOrder').classList.add('hidden');
 
         if (method === 'Transfer BCA') {
             document.getElementById('uiBCA').classList.remove('hidden');
-            document.getElementById('btnSubmitOrder').classList.remove('hidden');
         } else if (method === 'QRIS') {
             document.getElementById('uiQRIS').classList.remove('hidden');
-            document.getElementById('btnSubmitOrder').classList.remove('hidden');
         }
     }
 
-    // File to Base64
+    // --- PENGIRIMAN DATA KE GAS ---
     function getBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -193,11 +337,13 @@
         });
     }
 
-    // Submit Order ke Google Apps Script
     async function submitOrder() {
         const method = document.getElementById('paymentMethod').value;
-        let fileBase64 = null;
+        if (!method) {
+            alert('Harap pilih Metode Pembayaran!'); return;
+        }
 
+        let fileBase64 = null;
         if (method === 'Transfer BCA') {
             const fileInput = document.getElementById('uploadProof');
             if (fileInput.files.length === 0) {
@@ -207,14 +353,19 @@
         }
 
         document.getElementById('loadingOverlay').classList.remove('hidden');
+        document.getElementById('loadingOverlay').classList.add('flex');
+
+        // Menyiapkan array keranjang untuk dikirim ke Sheet
+        let cartArray = Object.values(cart);
+        let totalPesanan = cartArray.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
         const payload = {
             action: 'new_order',
             name: document.getElementById('custName').value,
             wa: document.getElementById('custWA').value,
             address: document.getElementById('custAddress').value,
-            cart: Object.values(cart),
-            total: Object.values(cart).reduce((sum, item) => sum + (item.price * item.qty), 0),
+            cart: cartArray,
+            total: totalPesanan,
             paymentMethod: method,
             fileBase64: fileBase64
         };
@@ -228,21 +379,26 @@
             
             if (result.status === 'success') {
                 // Generate Pesan WhatsApp
-                let waText = `Halo Kintoun Cafe!\nSaya sudah melakukan order via Web dengan detail:\n\n*Nama:* ${payload.name}\n*Alamat Delivery:* ${payload.address}\n*Total:* Rp ${payload.total.toLocaleString('id-ID')}\n*Metode Pembayaran:* ${payload.paymentMethod}\n`;
+                let waText = `Halo Kintoun Cafe!\nSaya sudah melakukan order via Web dengan detail:\n\n*Nama:* ${payload.name}\n*Alamat:* ${payload.address}\n*Total:* Rp ${payload.total.toLocaleString('id-ID')}\n*Metode:* ${payload.paymentMethod}\n`;
                 if(method === 'QRIS') {
                     waText += `\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
                 } else {
-                    waText += `\n_Bukti transfer sudah saya upload di form._`;
+                    waText += `\n_Bukti transfer sudah saya upload di aplikasi._`;
                 }
                 
                 const waUrl = `https://wa.me/${NOMOR_WA_CAFE}?text=${encodeURIComponent(waText)}`;
                 
-                alert('Pesanan Berhasil Disubmit! Anda akan diarahkan ke WhatsApp.');
+                alert('Pesanan Berhasil Disubmit! Anda akan diarahkan ke WhatsApp untuk konfirmasi kasir.');
                 window.location.href = waUrl;
+            } else {
+                 alert('Terjadi kesalahan pada server Google. Coba lagi.');
+                 document.getElementById('loadingOverlay').classList.add('hidden');
+                 document.getElementById('loadingOverlay').classList.remove('flex');
             }
         } catch (error) {
-            alert('Terjadi kesalahan koneksi. Silakan coba lagi.');
+            alert('Terjadi kesalahan koneksi. Pastikan internet Anda stabil.');
             document.getElementById('loadingOverlay').classList.add('hidden');
+            document.getElementById('loadingOverlay').classList.remove('flex');
         }
     }
 
