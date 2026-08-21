@@ -4,56 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Kasir - Kintoun Cafe</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Injeksi Color Palette Khusus
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00263F',      // Midnight Blue
+                        ivory: '#EEEBE1',        // Ivory White
+                        taupe: '#908371',        // Warm Taupe
+                        secondary: '#3C586D',    // Secondary Blue
+                        coolGrey: '#C0C9CE',     // Cool Grey
+                        muted: '#B8AD98',        // Muted Beige
+                        lightBeige: '#D6CFBF',   // Light Beige
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col" onload="initDashboard()">
+<body class="bg-ivory text-primary font-sans min-h-screen flex flex-col" onload="initDashboard()">
 
     <!-- HEADER -->
-    <header class="bg-amber-700 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-10">
+    <header class="bg-primary text-ivory p-5 shadow-lg flex justify-between items-center sticky top-0 z-20 rounded-b-3xl mb-6 mx-2 md:mx-6 mt-2">
         <div>
-            <h1 class="text-xl font-bold">Kintoun Cafe - Kasir</h1>
-            <p class="text-xs text-amber-200">Auto-refresh setiap 10 detik</p>
+            <h1 class="text-xl font-bold tracking-tight">Kintoun Order System</h1>
+            <p class="text-coolGrey text-xs font-medium mt-1">Auto-sync aktif • Kasir Dashboard</p>
         </div>
         <div class="flex items-center space-x-4">
-            <span id="statusConnection" class="text-sm font-semibold bg-green-500 px-3 py-1 rounded-full">Online</span>
-            <button onclick="fetchOrders()" class="bg-amber-600 hover:bg-amber-800 px-4 py-2 rounded text-sm font-bold transition">Refresh Manual</button>
+            <span id="statusConnection" class="text-xs font-bold tracking-wider uppercase bg-green-500 text-white px-3 py-1.5 rounded-full shadow-sm">Online</span>
+            <button onclick="fetchOrders()" class="bg-secondary hover:bg-taupe text-ivory px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm hidden md:block">
+                Refresh Data
+            </button>
         </div>
     </header>
 
+    <!-- PANDUAN AUDIO -->
+    <div id="audioNotice" class="mx-4 md:mx-8 mb-6 bg-white p-4 rounded-xl border border-lightBeige shadow-sm flex items-center justify-between cursor-pointer hover:bg-gray-50 transition" onclick="enableAudio(this)">
+        <p class="text-sm text-secondary font-medium"><span class="font-bold">🔔 Penting:</span> Klik kotak ini satu kali agar notifikasi suara pesanan baru bisa berbunyi.</p>
+        <span class="text-taupe font-bold text-xl">›</span>
+    </div>
+
     <!-- MAIN CONTENT: DAFTAR PESANAN -->
-    <main class="flex-grow p-4 md:p-6">
+    <main class="flex-grow px-4 md:px-8 pb-10">
         <!-- Container Grid untuk Card Pesanan -->
-        <div id="ordersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <p class="text-gray-500 col-span-full text-center py-10">Memuat data pesanan...</p>
+        <div id="ordersContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <p class="text-taupe col-span-full text-center py-20 font-medium">Menyinkronkan data pesanan...</p>
         </div>
     </main>
 
-    <!-- LOADING OVERLAY UNTUK UPDATE STATUS -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-30 hidden flex justify-center items-center z-50">
-        <div class="bg-white p-4 rounded-lg shadow-lg">
-            <p class="font-bold text-amber-700">Memperbarui Status...</p>
-        </div>
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-primary bg-opacity-80 backdrop-blur-sm hidden flex-col justify-center items-center z-[60]">
+        <div class="w-12 h-12 border-4 border-ivory border-t-taupe rounded-full animate-spin mb-4"></div>
+        <p class="font-bold text-ivory tracking-wide">Memperbarui Status...</p>
     </div>
 
 <script>
-    // --- KONFIGURASI ---
+    // --- KONFIGURASI PENTING ---
+    // PASTIKAN ANDA MENGGANTI URL INI DENGAN URL WEB APP GAS ANDA!
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygdcHwVBz0ihp3cYKqd1wf7NFK6h0OMYd-O95bkWpCgwP7Xb8taQKMZSX15ovy3cz8mA/exec';
     
-    let knownOrdersCount = 0; // Untuk mendeteksi pesanan baru
+    let knownOrdersCount = 0; 
     let audioContext = null;
 
-    // --- FUNGSI NOTIFIKASI SUARA (BEEP / DING) ---
-    // Menggunakan Web Audio API (Tidak butuh file mp3 eksternal)
+    // --- FUNGSI NOTIFIKASI SUARA ---
+    function enableAudio(element) {
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        element.style.display = 'none'; // Sembunyikan banner setelah diklik
+    }
+
     function playDing() {
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        
-        // Browser modern butuh interaksi user pertama kali untuk play audio, 
-        // tapi jika sudah jalan, akan otomatis.
-        if (audioContext.state === 'suspended') {
-            audioContext.resume();
-        }
+        if (!audioContext) return; 
+        if (audioContext.state === 'suspended') audioContext.resume();
 
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
@@ -61,160 +93,158 @@
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
         
-        oscillator.type = 'sine'; // Tipe gelombang suara
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // Nada
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(850, audioContext.currentTime); // Nada modern
         
-        gainNode.gain.setValueAtTime(1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5); // Durasi fade out
+        gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4); 
         
         oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
+        oscillator.stop(audioContext.currentTime + 0.4);
     }
 
     // --- FUNGSI MENGAMBIL DATA PESANAN ---
     async function fetchOrders() {
-        document.getElementById('statusConnection').innerText = 'Syncing...';
-        document.getElementById('statusConnection').className = 'text-sm font-semibold bg-yellow-500 text-white px-3 py-1 rounded-full';
+        const statusBadge = document.getElementById('statusConnection');
+        statusBadge.innerText = 'Syncing...';
+        statusBadge.className = 'text-xs font-bold tracking-wider uppercase bg-taupe text-white px-3 py-1.5 rounded-full shadow-sm';
 
         try {
             const response = await fetch(GAS_WEB_APP_URL);
             const orders = await response.json();
             
-            // Filter pesanan dari bawah ke atas (terbaru di atas)
             const reversedOrders = orders.reverse();
-            
             renderOrders(reversedOrders);
 
-            // Cek apakah ada pesanan baru
             if (knownOrdersCount !== 0 && orders.length > knownOrdersCount) {
-                playDing(); // Bunyikan suara
+                playDing(); 
             }
             knownOrdersCount = orders.length;
 
-            document.getElementById('statusConnection').innerText = 'Online';
-            document.getElementById('statusConnection').className = 'text-sm font-semibold bg-green-500 px-3 py-1 rounded-full';
+            statusBadge.innerText = 'Online';
+            statusBadge.className = 'text-xs font-bold tracking-wider uppercase bg-secondary text-white px-3 py-1.5 rounded-full shadow-sm';
         } catch (error) {
-            console.error('Error fetching data:', error);
-            document.getElementById('statusConnection').innerText = 'Offline';
-            document.getElementById('statusConnection').className = 'text-sm font-semibold bg-red-500 px-3 py-1 rounded-full';
+            statusBadge.innerText = 'Offline';
+            statusBadge.className = 'text-xs font-bold tracking-wider uppercase bg-red-800 text-white px-3 py-1.5 rounded-full shadow-sm';
         }
     }
 
     // --- RENDER UI CARD PESANAN ---
     function renderOrders(orders) {
         const container = document.getElementById('ordersContainer');
-        
-        if (orders.length === 0) {
-            container.innerHTML = `<p class="text-gray-500 col-span-full text-center py-10">Belum ada pesanan.</p>`;
-            return;
-        }
-
+        let activeOrdersCount = 0;
         let html = '';
-        orders.forEach(order => {
-            // Jangan tampilkan yang sudah "Selesai" untuk menghemat layar kasir
-            // Jika ingin menampilkan semua, hapus blok IF di bawah ini.
-            if(order.status === 'Selesai') return; 
 
-            // Format pesanan text (mengganti newline dengan <br>)
+        orders.forEach(order => {
+            if(order.status === 'Selesai') return; 
+            activeOrdersCount++;
+
             const orderListHtml = order.orders.replace(/\n/g, '<br>');
 
-            // Warna Badge Status
-            let statusBadge = 'bg-red-100 text-red-800 border-red-200'; // Default: Pesanan Masuk
-            if (order.status === 'Sedang Diproses') statusBadge = 'bg-blue-100 text-blue-800 border-blue-200';
+            let statusUI = order.status === 'Pesanan Masuk' 
+                ? 'bg-red-50 text-red-700 border-red-200' 
+                : 'bg-ivory text-secondary border-lightBeige';
             
+            let cardAccent = order.status === 'Pesanan Masuk' ? 'border-t-4 border-t-red-400' : 'border-t-4 border-t-secondary';
+
             html += `
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                <div class="${order.status === 'Pesanan Masuk' ? 'bg-red-50' : 'bg-gray-50'} p-3 border-b border-gray-200 flex justify-between items-center">
+            <div class="bg-white rounded-2xl shadow-sm border border-lightBeige flex flex-col ${cardAccent} overflow-hidden transition hover:shadow-md">
+                
+                <!-- Card Header -->
+                <div class="p-5 border-b border-lightBeige flex justify-between items-start">
                     <div>
-                        <span class="font-bold text-sm text-gray-800">${order.id}</span>
-                        <p class="text-xs text-gray-500">${order.timestamp}</p>
+                        <span class="font-extrabold text-xs text-taupe tracking-wider">${order.id}</span>
+                        <p class="text-xs text-coolGrey font-medium mt-1">${order.timestamp}</p>
                     </div>
-                    <span class="px-2 py-1 rounded text-xs font-bold border ${statusBadge}">${order.status}</span>
+                    <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusUI}">${order.status}</span>
                 </div>
                 
-                <div class="p-4 flex-grow text-sm">
-                    <p class="font-bold text-lg mb-1">${order.name}</p>
-                    <p class="text-gray-600 mb-2">📞 ${order.wa}</p>
-                    <div class="bg-gray-50 p-2 rounded border border-gray-100 mb-3">
-                        <p class="font-semibold text-xs text-gray-500 uppercase tracking-wider mb-1">Alamat Delivery:</p>
-                        <p class="text-gray-700">${order.address}</p>
+                <!-- Customer Info -->
+                <div class="p-5 flex-grow">
+                    <h3 class="font-bold text-xl text-primary mb-1">${order.name}</h3>
+                    <p class="text-secondary text-sm font-medium mb-4 flex items-center">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                        ${order.wa}
+                    </p>
+                    
+                    <div class="bg-ivory p-3 rounded-xl border border-lightBeige mb-4">
+                        <p class="font-bold text-[10px] text-taupe uppercase tracking-wider mb-1">Alamat Pengiriman</p>
+                        <p class="text-primary text-sm font-medium leading-relaxed">${order.address}</p>
                     </div>
                     
-                    <div class="mb-3">
-                        <p class="font-semibold text-xs text-gray-500 uppercase tracking-wider mb-1">Detail Pesanan:</p>
-                        <p class="text-gray-800 font-medium leading-relaxed">${orderListHtml}</p>
+                    <div class="mb-4">
+                        <p class="font-bold text-[10px] text-taupe uppercase tracking-wider mb-2">Detail Pesanan</p>
+                        <p class="text-primary text-sm font-semibold leading-relaxed pl-2 border-l-2 border-secondary">${orderListHtml}</p>
                     </div>
 
-                    <div class="flex justify-between items-end mt-4 pt-4 border-t border-gray-100">
+                    <div class="flex justify-between items-end mt-5 pt-5 border-t border-lightBeige">
                         <div>
-                            <p class="text-xs text-gray-500">Total Harga:</p>
-                            <p class="font-bold text-amber-600 text-lg">Rp ${order.total.toLocaleString('id-ID')}</p>
+                            <p class="font-bold text-[10px] text-taupe uppercase tracking-wider mb-1">Total</p>
+                            <p class="font-extrabold text-primary text-lg">Rp ${order.total.toLocaleString('id-ID')}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-xs text-gray-500">Metode:</p>
-                            <p class="font-bold text-gray-700">${order.payment}</p>
+                            <p class="font-bold text-[10px] text-taupe uppercase tracking-wider mb-1">Metode</p>
+                            <p class="font-bold text-secondary text-sm">${order.payment}</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="p-3 bg-gray-50 border-t border-gray-200 flex flex-col space-y-2">
-                    ${order.payment === 'Transfer BCA' && order.proofUrl ? `<a href="${order.proofUrl}" target="_blank" class="w-full text-center bg-white border border-gray-300 text-gray-700 py-1.5 rounded text-sm font-semibold hover:bg-gray-100 transition">Lihat Bukti Transfer</a>` : ''}
+                <!-- Card Actions -->
+                <div class="p-5 bg-white border-t border-lightBeige space-y-3">
+                    ${order.payment === 'Transfer BCA' && order.proofUrl ? `<a href="${order.proofUrl}" target="_blank" class="block w-full text-center bg-transparent border-2 border-secondary text-secondary py-2.5 rounded-xl text-sm font-bold hover:bg-secondary hover:text-ivory transition">Lihat Bukti Transfer</a>` : ''}
                     
-                    ${order.status === 'Pesanan Masuk' ? `<button onclick="updateStatus('${order.id}', 'Sedang Diproses')" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold hover:bg-blue-700 transition">Proses Pesanan Ini</button>` : ''}
+                    ${order.status === 'Pesanan Masuk' ? `<button onclick="updateStatus('${order.id}', 'Sedang Diproses')" class="w-full bg-primary text-ivory py-3 rounded-xl text-sm font-bold hover:bg-secondary transition shadow-md">Proses Pesanan</button>` : ''}
                     
-                    ${order.status === 'Sedang Diproses' ? `<button onclick="updateStatus('${order.id}', 'Selesai')" class="w-full bg-green-600 text-white py-2 rounded text-sm font-bold hover:bg-green-700 transition">Tandai Selesai & Kirim</button>` : ''}
+                    ${order.status === 'Sedang Diproses' ? `<button onclick="updateStatus('${order.id}', 'Selesai')" class="w-full bg-secondary text-ivory py-3 rounded-xl text-sm font-bold hover:bg-primary transition shadow-md">Tandai Selesai & Kirim</button>` : ''}
                 </div>
             </div>`;
         });
         
-        if(html === '') {
-            container.innerHTML = `<p class="text-gray-500 col-span-full text-center py-10">Semua pesanan sudah selesai dikerjakan.</p>`;
+        if(activeOrdersCount === 0) {
+            container.innerHTML = `
+            <div class="col-span-full flex flex-col items-center justify-center py-20">
+                <svg class="w-16 h-16 text-lightBeige mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                <p class="text-secondary font-semibold">Belum ada pesanan aktif.</p>
+                <p class="text-taupe text-sm mt-1">Duduk santai, kami akan memberi tahu jika ada pesanan masuk.</p>
+            </div>`;
         } else {
             container.innerHTML = html;
         }
     }
 
-    // --- FUNGSI UPDATE STATUS KE GOOGLE SHEETS ---
+    // --- FUNGSI UPDATE STATUS ---
     async function updateStatus(orderId, newStatus) {
-        if(!confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) return;
+        if(!confirm(`Ubah status pesanan ${orderId} menjadi "${newStatus}"?`)) return;
 
         document.getElementById('loadingOverlay').classList.remove('hidden');
+        document.getElementById('loadingOverlay').classList.add('flex');
 
         try {
-            const payload = {
-                action: 'update_status',
-                orderId: orderId,
-                newStatus: newStatus
-            };
-
-            const response = await fetch(GAS_WEB_APP_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            });
-            
+            const payload = { action: 'update_status', orderId: orderId, newStatus: newStatus };
+            const response = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
             const result = await response.json();
+            
             if (result.status === 'success') {
-                await fetchOrders(); // Refresh data setelah update berhasil
+                await fetchOrders(); 
             } else {
-                alert('Gagal update status. Coba lagi.');
+                alert('Gagal update status server.');
             }
         } catch (error) {
             alert('Terjadi kesalahan koneksi.');
         } finally {
             document.getElementById('loadingOverlay').classList.add('hidden');
+            document.getElementById('loadingOverlay').classList.remove('flex');
         }
     }
 
-    // --- INISIALISASI & AUTO-POLLING ---
+    // --- INISIALISASI ---
     function initDashboard() {
-        // Harus ada interaksi klik di halaman (meski sembarang tempat) agar browser mengizinkan audio berjalan.
+        // Klik di manapun untuk inisiasi Web Audio API (Kebijakan browser)
         document.body.addEventListener('click', () => {
             if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }, { once: true });
 
-        fetchOrders(); // Tarik data pertama kali
-        
-        // Auto-refresh setiap 10 detik (10000 ms)
+        fetchOrders(); 
         setInterval(fetchOrders, 10000); 
     }
 </script>
