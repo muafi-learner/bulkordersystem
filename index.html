@@ -3,220 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Kasir - Kintoun Cafe</title>
+    <title>Kintoun Cafe - Delivery Order</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col" onload="initDashboard()">
+<body class="bg-gray-50 text-gray-800 font-sans p-4 md:p-8 max-w-md mx-auto">
 
     <!-- HEADER -->
-    <header class="bg-amber-700 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-10">
-        <div>
-            <h1 class="text-xl font-bold">Kintoun Cafe - Kasir</h1>
-            <p class="text-xs text-amber-200">Auto-refresh setiap 10 detik</p>
-        </div>
-        <div class="flex items-center space-x-4">
-            <span id="statusConnection" class="text-sm font-semibold bg-green-500 px-3 py-1 rounded-full">Online</span>
-            <button onclick="fetchOrders()" class="bg-amber-600 hover:bg-amber-800 px-4 py-2 rounded text-sm font-bold transition">Refresh Manual</button>
-        </div>
-    </header>
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-amber-700">Kintoun Cafe</h1>
+        <p class="text-sm text-gray-500">Delivery Order System</p>
+    </div>
 
-    <!-- MAIN CONTENT: DAFTAR PESANAN -->
-    <main class="flex-grow p-4 md:p-6">
-        <!-- Container Grid untuk Card Pesanan -->
-        <div id="ordersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <p class="text-gray-500 col-span-full text-center py-10">Memuat data pesanan...</p>
-        </div>
-    </main>
+    <!-- DATA PELANGGAN -->
+    <div class="bg-white p-5 rounded-xl shadow-sm mb-6 border border-gray-100">
+        <h2 class="text-lg font-semibold mb-4 border-b pb-2">Data Pengiriman</h2>
+        <input type="text" id="custName" placeholder="Nama Lengkap" class="w-full mb-3 p-3 border rounded-lg outline-none focus:border-amber-500">
+        <input type="number" id="custWA" placeholder="Nomor WhatsApp (Cth: 0812...)" class="w-full mb-3 p-3 border rounded-lg outline-none focus:border-amber-500">
+        <textarea id="custAddress" placeholder="Alamat Pengiriman Lengkap" class="w-full p-3 border rounded-lg outline-none focus:border-amber-500 h-24"></textarea>
+    </div>
 
-    <!-- LOADING OVERLAY UNTUK UPDATE STATUS -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-30 hidden flex justify-center items-center z-50">
-        <div class="bg-white p-4 rounded-lg shadow-lg">
-            <p class="font-bold text-amber-700">Memperbarui Status...</p>
+    <!-- MENU CONTAINER -->
+    <div id="menuContainer" class="mb-6"></div>
+
+    <!-- CART & TOTAL -->
+    <div class="bg-white p-5 rounded-xl shadow-sm mb-20 border border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+            <span class="font-semibold">Total Pesanan:</span>
+            <span id="totalPrice" class="text-xl font-bold text-amber-600">Rp 0</span>
+        </div>
+        <button onclick="proceedToPayment()" class="w-full bg-amber-600 text-white font-bold py-3 rounded-lg hover:bg-amber-700 transition">Checkout Sekarang</button>
+    </div>
+
+    <!-- MODAL PEMBAYARAN (Tersembunyi secara default) -->
+    <div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h2 class="text-xl font-bold mb-4">Pilih Pembayaran</h2>
+            
+            <select id="paymentMethod" onchange="togglePaymentUI()" class="w-full p-3 border rounded-lg mb-4">
+                <option value="">-- Pilih Metode --</option>
+                <option value="Transfer BCA">Transfer Bank (BCA)</option>
+                <option value="QRIS">QRIS (Manual via Kasir)</option>
+            </select>
+
+            <!-- UI BCA -->
+            <div id="uiBCA" class="hidden mb-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <p class="text-sm text-gray-700 mb-2">Transfer ke Rekening BCA:</p>
+                <p class="font-bold text-lg mb-1">1234567890</p>
+                <p class="text-sm font-semibold mb-4 text-gray-800">a.n Kintoun Cafe</p>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Bukti Transfer</label>
+                <input type="file" id="uploadProof" accept="image/*" class="w-full text-sm">
+            </div>
+
+            <!-- UI QRIS -->
+            <div id="uiQRIS" class="hidden mb-4 bg-green-50 p-4 rounded-lg border border-green-100 text-center">
+                <p class="text-sm font-medium text-green-800 mb-2">Pesanan kamu sedang diproses oleh Kasir.</p>
+                <p class="text-xs text-gray-600">Silakan lanjut submit, lalu klik tombol Chat WA setelah ini untuk meminta kode QRIS dari kasir kami.</p>
+            </div>
+
+            <button id="btnSubmitOrder" onclick="submitOrder()" class="w-full bg-gray-800 text-white font-bold py-3 rounded-lg hover:bg-gray-900 transition mb-2 hidden">Konfirmasi & Kirim Pesanan</button>
+            <button onclick="closePaymentModal()" class="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-300 transition">Batal / Kembali</button>
         </div>
     </div>
 
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-white bg-opacity-80 hidden flex justify-center items-center z-50">
+        <p class="font-bold text-amber-600 animate-pulse text-xl">Memproses Pesanan...</p>
+    </div>
+
 <script>
-    // --- KONFIGURASI ---
+    // --- KONFIGURASI PENTING ---
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygdcHwVBz0ihp3cYKqd1wf7NFK6h0OMYd-O95bkWpCgwP7Xb8taQKMZSX15ovy3cz8mA/exec';
-    
-    let knownOrdersCount = 0; // Untuk mendeteksi pesanan baru
-    let audioContext = null;
+    const NOMOR_WA_CAFE = '6289509847998'; // Ganti dengan nomor WA Toko (gunakan format 62)
 
-    // --- FUNGSI NOTIFIKASI SUARA (BEEP / DING) ---
-    // Menggunakan Web Audio API (Tidak butuh file mp3 eksternal)
-    function playDing() {
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        
-        // Browser modern butuh interaksi user pertama kali untuk play audio, 
-        // tapi jika sudah jalan, akan otomatis.
-        if (audioContext.state === 'suspended') {
-            audioContext.resume();
-        }
+    // Data Menu
+    const menuData = [
+        { category: 'Kintoun Signature', items: [
+            { id: 'S1', name: 'Kopi Susu Kintoun', price: 13545 },
+            { id: 'S2', name: 'Sea Salt Butterscotch', price: 15364 },
+            { id: 'S3', name: 'Es Kopi Susu Tiramisu', price: 15364 },
+            { id: 'S4', name: 'Double Shot Iced Shaken', price: 18000 }
+        ]},
+        { category: 'Kintoun Black Series', items: [
+            { id: 'B1', name: 'Americano Iced Black', price: 9909 },
+            { id: 'B2', name: 'Sunset Peach Americano', price: 15273 }
+        ]},
+        { category: 'Selain Kopi', items: [
+            { id: 'N1', name: 'Matcha Sea Salt', price: 15273 },
+            { id: 'N2', name: 'Choc-Cloud', price: 15273 }
+        ]}
+    ];
 
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.type = 'sine'; // Tipe gelombang suara
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // Nada
-        
-        gainNode.gain.setValueAtTime(1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5); // Durasi fade out
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
-    }
+    let cart = {}; // Format: { "id_leveles": { id, name, price, qty, iceLevel } }
 
-    // --- FUNGSI MENGAMBIL DATA PESANAN ---
-    async function fetchOrders() {
-        document.getElementById('statusConnection').innerText = 'Syncing...';
-        document.getElementById('statusConnection').className = 'text-sm font-semibold bg-yellow-500 text-white px-3 py-1 rounded-full';
-
-        try {
-            const response = await fetch(GAS_WEB_APP_URL);
-            const orders = await response.json();
-            
-            // Filter pesanan dari bawah ke atas (terbaru di atas)
-            const reversedOrders = orders.reverse();
-            
-            renderOrders(reversedOrders);
-
-            // Cek apakah ada pesanan baru
-            if (knownOrdersCount !== 0 && orders.length > knownOrdersCount) {
-                playDing(); // Bunyikan suara
-            }
-            knownOrdersCount = orders.length;
-
-            document.getElementById('statusConnection').innerText = 'Online';
-            document.getElementById('statusConnection').className = 'text-sm font-semibold bg-green-500 px-3 py-1 rounded-full';
-        } catch (error) {
-            console.error('Error fetching data:', error);
-            document.getElementById('statusConnection').innerText = 'Offline';
-            document.getElementById('statusConnection').className = 'text-sm font-semibold bg-red-500 px-3 py-1 rounded-full';
-        }
-    }
-
-    // --- RENDER UI CARD PESANAN ---
-    function renderOrders(orders) {
-        const container = document.getElementById('ordersContainer');
-        
-        if (orders.length === 0) {
-            container.innerHTML = `<p class="text-gray-500 col-span-full text-center py-10">Belum ada pesanan.</p>`;
-            return;
-        }
-
+    // Render Menu ke HTML
+    function renderMenu() {
+        const container = document.getElementById('menuContainer');
         let html = '';
-        orders.forEach(order => {
-            // Jangan tampilkan yang sudah "Selesai" untuk menghemat layar kasir
-            // Jika ingin menampilkan semua, hapus blok IF di bawah ini.
-            if(order.status === 'Selesai') return; 
 
-            // Format pesanan text (mengganti newline dengan <br>)
-            const orderListHtml = order.orders.replace(/\n/g, '<br>');
-
-            // Warna Badge Status
-            let statusBadge = 'bg-red-100 text-red-800 border-red-200'; // Default: Pesanan Masuk
-            if (order.status === 'Sedang Diproses') statusBadge = 'bg-blue-100 text-blue-800 border-blue-200';
-            
-            html += `
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                <div class="${order.status === 'Pesanan Masuk' ? 'bg-red-50' : 'bg-gray-50'} p-3 border-b border-gray-200 flex justify-between items-center">
-                    <div>
-                        <span class="font-bold text-sm text-gray-800">${order.id}</span>
-                        <p class="text-xs text-gray-500">${order.timestamp}</p>
-                    </div>
-                    <span class="px-2 py-1 rounded text-xs font-bold border ${statusBadge}">${order.status}</span>
-                </div>
-                
-                <div class="p-4 flex-grow text-sm">
-                    <p class="font-bold text-lg mb-1">${order.name}</p>
-                    <p class="text-gray-600 mb-2">📞 ${order.wa}</p>
-                    <div class="bg-gray-50 p-2 rounded border border-gray-100 mb-3">
-                        <p class="font-semibold text-xs text-gray-500 uppercase tracking-wider mb-1">Alamat Delivery:</p>
-                        <p class="text-gray-700">${order.address}</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <p class="font-semibold text-xs text-gray-500 uppercase tracking-wider mb-1">Detail Pesanan:</p>
-                        <p class="text-gray-800 font-medium leading-relaxed">${orderListHtml}</p>
-                    </div>
-
-                    <div class="flex justify-between items-end mt-4 pt-4 border-t border-gray-100">
+        menuData.forEach(cat => {
+            html += `<h3 class="text-xl font-bold mt-6 mb-3 text-gray-800">${cat.category}</h3>`;
+            cat.items.forEach(item => {
+                html += `
+                <div class="bg-white p-4 rounded-xl shadow-sm mb-3 border border-gray-100 flex flex-col">
+                    <div class="flex justify-between items-start mb-2">
                         <div>
-                            <p class="text-xs text-gray-500">Total Harga:</p>
-                            <p class="font-bold text-amber-600 text-lg">Rp ${order.total.toLocaleString('id-ID')}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xs text-gray-500">Metode:</p>
-                            <p class="font-bold text-gray-700">${order.payment}</p>
+                            <p class="font-bold text-gray-800">${item.name}</p>
+                            <p class="text-sm text-amber-600">Rp ${item.price.toLocaleString('id-ID')}</p>
                         </div>
                     </div>
-                </div>
-
-                <div class="p-3 bg-gray-50 border-t border-gray-200 flex flex-col space-y-2">
-                    ${order.payment === 'Transfer BCA' && order.proofUrl ? `<a href="${order.proofUrl}" target="_blank" class="w-full text-center bg-white border border-gray-300 text-gray-700 py-1.5 rounded text-sm font-semibold hover:bg-gray-100 transition">Lihat Bukti Transfer</a>` : ''}
-                    
-                    ${order.status === 'Pesanan Masuk' ? `<button onclick="updateStatus('${order.id}', 'Sedang Diproses')" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold hover:bg-blue-700 transition">Proses Pesanan Ini</button>` : ''}
-                    
-                    ${order.status === 'Sedang Diproses' ? `<button onclick="updateStatus('${order.id}', 'Selesai')" class="w-full bg-green-600 text-white py-2 rounded text-sm font-bold hover:bg-green-700 transition">Tandai Selesai & Kirim</button>` : ''}
-                </div>
-            </div>`;
+                    <div class="flex justify-between items-center mt-2">
+                        <select id="ice_${item.id}" class="text-sm border rounded p-1 text-gray-600 outline-none">
+                            <option value="Normal Ice">Normal Ice</option>
+                            <option value="Less Ice">Less Ice</option>
+                            <option value="No Ice">No Ice</option>
+                        </select>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="updateCart('${item.id}', '${item.name}', ${item.price}, -1)" class="w-8 h-8 bg-gray-200 rounded-full font-bold text-lg">-</button>
+                            <span id="qty_${item.id}" class="font-bold w-4 text-center">0</span>
+                            <button onclick="updateCart('${item.id}', '${item.name}', ${item.price}, 1)" class="w-8 h-8 bg-amber-100 text-amber-700 rounded-full font-bold text-lg">+</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
         });
-        
-        if(html === '') {
-            container.innerHTML = `<p class="text-gray-500 col-span-full text-center py-10">Semua pesanan sudah selesai dikerjakan.</p>`;
-        } else {
-            container.innerHTML = html;
+        container.innerHTML = html;
+    }
+
+    // Logic Keranjang (Cart)
+    function updateCart(id, name, price, change) {
+        let iceLevel = document.getElementById(`ice_${id}`).value;
+        let cartKey = `${id}_${iceLevel}`;
+
+        if (!cart[cartKey]) {
+            cart[cartKey] = { id, name, price, qty: 0, iceLevel };
+        }
+
+        cart[cartKey].qty += change;
+        if (cart[cartKey].qty <= 0) delete cart[cartKey];
+
+        // Update UI Qty (Menampilkan total qty dari item tersebut terlepas dari level es untuk simplicity UI)
+        let totalItemQty = Object.values(cart).filter(i => i.id === id).reduce((sum, i) => sum + i.qty, 0);
+        document.getElementById(`qty_${id}`).innerText = totalItemQty;
+
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        let total = Object.values(cart).reduce((sum, item) => sum + (item.price * item.qty), 0);
+        document.getElementById('totalPrice').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+    }
+
+    // Modal & Payment UI Logic
+    function proceedToPayment() {
+        if (!document.getElementById('custName').value || !document.getElementById('custWA').value || !document.getElementById('custAddress').value) {
+            alert('Mohon lengkapi Data Pengiriman terlebih dahulu.'); return;
+        }
+        if (Object.keys(cart).length === 0) {
+            alert('Keranjang belanja masih kosong!'); return;
+        }
+        document.getElementById('paymentModal').classList.remove('hidden');
+    }
+
+    function closePaymentModal() {
+        document.getElementById('paymentModal').classList.add('hidden');
+    }
+
+    function togglePaymentUI() {
+        const method = document.getElementById('paymentMethod').value;
+        document.getElementById('uiBCA').classList.add('hidden');
+        document.getElementById('uiQRIS').classList.add('hidden');
+        document.getElementById('btnSubmitOrder').classList.add('hidden');
+
+        if (method === 'Transfer BCA') {
+            document.getElementById('uiBCA').classList.remove('hidden');
+            document.getElementById('btnSubmitOrder').classList.remove('hidden');
+        } else if (method === 'QRIS') {
+            document.getElementById('uiQRIS').classList.remove('hidden');
+            document.getElementById('btnSubmitOrder').classList.remove('hidden');
         }
     }
 
-    // --- FUNGSI UPDATE STATUS KE GOOGLE SHEETS ---
-    async function updateStatus(orderId, newStatus) {
-        if(!confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) return;
+    // File to Base64
+    function getBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // Submit Order ke Google Apps Script
+    async function submitOrder() {
+        const method = document.getElementById('paymentMethod').value;
+        let fileBase64 = null;
+
+        if (method === 'Transfer BCA') {
+            const fileInput = document.getElementById('uploadProof');
+            if (fileInput.files.length === 0) {
+                alert('Harap upload bukti transfer BCA!'); return;
+            }
+            fileBase64 = await getBase64(fileInput.files[0]);
+        }
 
         document.getElementById('loadingOverlay').classList.remove('hidden');
 
-        try {
-            const payload = {
-                action: 'update_status',
-                orderId: orderId,
-                newStatus: newStatus
-            };
+        const payload = {
+            action: 'new_order',
+            name: document.getElementById('custName').value,
+            wa: document.getElementById('custWA').value,
+            address: document.getElementById('custAddress').value,
+            cart: Object.values(cart),
+            total: Object.values(cart).reduce((sum, item) => sum + (item.price * item.qty), 0),
+            paymentMethod: method,
+            fileBase64: fileBase64
+        };
 
+        try {
             const response = await fetch(GAS_WEB_APP_URL, {
                 method: 'POST',
                 body: JSON.stringify(payload)
             });
-            
             const result = await response.json();
+            
             if (result.status === 'success') {
-                await fetchOrders(); // Refresh data setelah update berhasil
-            } else {
-                alert('Gagal update status. Coba lagi.');
+                // Generate Pesan WhatsApp
+                let waText = `Halo Kintoun Cafe!\nSaya sudah melakukan order via Web dengan detail:\n\n*Nama:* ${payload.name}\n*Alamat Delivery:* ${payload.address}\n*Total:* Rp ${payload.total.toLocaleString('id-ID')}\n*Metode Pembayaran:* ${payload.paymentMethod}\n`;
+                if(method === 'QRIS') {
+                    waText += `\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
+                } else {
+                    waText += `\n_Bukti transfer sudah saya upload di form._`;
+                }
+                
+                const waUrl = `https://wa.me/${NOMOR_WA_CAFE}?text=${encodeURIComponent(waText)}`;
+                
+                alert('Pesanan Berhasil Disubmit! Anda akan diarahkan ke WhatsApp.');
+                window.location.href = waUrl;
             }
         } catch (error) {
-            alert('Terjadi kesalahan koneksi.');
-        } finally {
+            alert('Terjadi kesalahan koneksi. Silakan coba lagi.');
             document.getElementById('loadingOverlay').classList.add('hidden');
         }
     }
 
-    // --- INISIALISASI & AUTO-POLLING ---
-    function initDashboard() {
-        // Harus ada interaksi klik di halaman (meski sembarang tempat) agar browser mengizinkan audio berjalan.
-        document.body.addEventListener('click', () => {
-            if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }, { once: true });
-
-        fetchOrders(); // Tarik data pertama kali
-        
-        // Auto-refresh setiap 10 detik (10000 ms)
-        setInterval(fetchOrders, 10000); 
-    }
+    // Inisialisasi awal
+    renderMenu();
 </script>
 </body>
 </html>
