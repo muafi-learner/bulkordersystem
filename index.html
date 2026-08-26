@@ -7,7 +7,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -41,21 +41,34 @@
 
     <header class="bg-primary text-ivory py-8 px-6 rounded-b-3xl shadow-md mb-6">
         <h1 class="text-2xl font-bold tracking-tight">Kintoun Coffee</h1>
-        <p class="text-coolGrey text-sm mt-1 font-medium">Delivery Order System</p>
+        <p class="text-coolGrey text-sm mt-1 font-medium">Delivery & Pick Up System</p>
     </header>
 
     <main class="max-w-md mx-auto px-4">
         
         <section class="mb-8">
-            <h2 class="text-sm font-bold text-taupe uppercase tracking-wider mb-4">Informasi Pengiriman</h2>
-            <div class="space-y-4 bg-white p-6 rounded-2xl shadow-sm border border-lightBeige">
+            <h2 class="text-sm font-bold text-taupe uppercase tracking-wider mb-4">Informasi Pesanan</h2>
+            
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-lightBeige space-y-5">
+                
+                <div class="bg-lightBeige p-1.5 rounded-xl flex space-x-2">
+                    <label class="flex-1 cursor-pointer relative">
+                        <input type="radio" name="orderType" value="Delivery" class="peer sr-only" checked onchange="toggleAddress()">
+                        <div class="text-center py-2 rounded-lg text-sm font-bold text-secondary peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition">Delivery</div>
+                    </label>
+                    <label class="flex-1 cursor-pointer relative">
+                        <input type="radio" name="orderType" value="In Person" class="peer sr-only" onchange="toggleAddress()">
+                        <div class="text-center py-2 rounded-lg text-sm font-bold text-secondary peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition">In Person</div>
+                    </label>
+                </div>
+
                 <div>
                     <input type="text" id="custName" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-sm font-medium" placeholder="Nama Lengkap">
                 </div>
                 <div>
                     <input type="number" id="custWA" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-sm font-medium" placeholder="Nomor WhatsApp (Cth: 0812...)">
                 </div>
-                <div>
+                <div id="addressContainer" class="transition-all duration-300">
                     <textarea id="custAddress" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-sm font-medium resize-none h-14" placeholder="Alamat Pengiriman Lengkap"></textarea>
                 </div>
             </div>
@@ -142,10 +155,27 @@
         ]}
     ];
 
-    // Format Data Cart: { "S1_Normal Ice": { id, name, price, iceLevel, qty } }
     let cart = {}; 
+    let activeIceLevels = {}; // Menyimpan state pilihan es sementara sebelum ditekan tombol tambah
 
-    // Render Menu ke HTML
+    // Toggle Alamat berdasarkan Delivery/In Person
+    function toggleAddress() {
+        const orderType = document.querySelector('input[name="orderType"]:checked').value;
+        const addressContainer = document.getElementById('addressContainer');
+        const addressInput = document.getElementById('custAddress');
+
+        if (orderType === 'In Person') {
+            addressContainer.style.display = 'none';
+            addressInput.value = 'Ambil Sendiri di Toko (In Person)';
+        } else {
+            addressContainer.style.display = 'block';
+            if(addressInput.value === 'Ambil Sendiri di Toko (In Person)') {
+                addressInput.value = '';
+            }
+        }
+    }
+
+    // Merender Daftar Menu & Chips
     function renderMenu() {
         const container = document.getElementById('menuContainer');
         let html = '';
@@ -154,25 +184,30 @@
             html += `<h3 class="text-sm font-bold text-taupe uppercase tracking-wider mt-8 mb-4">${cat.category}</h3>`;
             html += `<div class="space-y-4">`;
             cat.items.forEach(item => {
+                // Inisialisasi state es untuk menu ini
+                activeIceLevels[item.id] = 'Normal Ice';
+
                 html += `
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-lightBeige flex flex-col relative overflow-hidden group">
-                    <div class="flex justify-between items-start mb-3">
+                    <div class="flex justify-between items-start mb-2">
                         <div>
                             <p class="font-bold text-primary text-base">${item.name}</p>
                             <p class="text-sm font-semibold text-secondary mt-0.5">Rp ${item.price.toLocaleString('id-ID')}</p>
                         </div>
                     </div>
                     
-                    <div class="flex justify-between items-center mt-2 space-x-3">
-                        <select id="ice_${item.id}" class="flex-1 text-sm bg-ivory border border-lightBeige rounded-lg px-2 py-2 text-primary font-medium outline-none focus:border-secondary transition">
-                            <option value="Normal Ice">Normal Ice</option>
-                            <option value="Less Ice">Less Ice</option>
-                            <option value="No Ice">No Ice</option>
-                        </select>
-                        <button onclick="addToCart('${item.id}', '${item.name}', ${item.price})" class="bg-secondary text-ivory text-sm font-bold px-5 py-2 rounded-lg hover:bg-primary transition shadow-sm">
-                            Tambah
+                    <div class="flex space-x-2 mt-1 mb-4">
+                        <button id="chip_less_${item.id}" onclick="toggleIce('${item.id}', 'Less Ice')" class="ice-chip-${item.id} text-[11px] font-bold px-3 py-1.5 rounded-full border border-lightBeige text-secondary hover:bg-lightBeige transition outline-none">
+                            Less Ice
+                        </button>
+                        <button id="chip_no_${item.id}" onclick="toggleIce('${item.id}', 'No Ice')" class="ice-chip-${item.id} text-[11px] font-bold px-3 py-1.5 rounded-full border border-lightBeige text-secondary hover:bg-lightBeige transition outline-none">
+                            No Ice
                         </button>
                     </div>
+
+                    <button id="btn_add_${item.id}" onclick="addToCart('${item.id}', '${item.name}', ${item.price})" class="w-full bg-secondary text-ivory text-sm font-bold py-2.5 rounded-xl hover:bg-primary transition shadow-sm outline-none">
+                        + Tambah
+                    </button>
                 </div>`;
             });
             html += `</div>`;
@@ -180,9 +215,41 @@
         container.innerHTML = html;
     }
 
+    // Logika Klik Chips (Mutually Exclusive)
+    function toggleIce(itemId, selectedLevel) {
+        let currentLevel = activeIceLevels[itemId];
+
+        // Reset semua style chip untuk item ini
+        document.querySelectorAll(`.ice-chip-${itemId}`).forEach(chip => {
+            chip.classList.remove('bg-primary', 'text-ivory', 'border-primary');
+            chip.classList.add('border-lightBeige', 'text-secondary');
+        });
+
+        // Jika diklik chip yang sama (toggle off) -> kembalikan ke Normal
+        if (currentLevel === selectedLevel) {
+            activeIceLevels[itemId] = 'Normal Ice';
+        } 
+        // Jika diklik chip baru (toggle on)
+        else {
+            activeIceLevels[itemId] = selectedLevel;
+            let targetChip = selectedLevel === 'Less Ice' ? document.getElementById(`chip_less_${itemId}`) : document.getElementById(`chip_no_${itemId}`);
+            targetChip.classList.remove('border-lightBeige', 'text-secondary');
+            targetChip.classList.add('bg-primary', 'text-ivory', 'border-primary');
+        }
+    }
+
+    // Reset Chip setelah masuk keranjang
+    function resetIceChips(itemId) {
+        activeIceLevels[itemId] = 'Normal Ice';
+        document.querySelectorAll(`.ice-chip-${itemId}`).forEach(chip => {
+            chip.classList.remove('bg-primary', 'text-ivory', 'border-primary');
+            chip.classList.add('border-lightBeige', 'text-secondary');
+        });
+    }
+
     // Logic Tambah ke Keranjang
     function addToCart(id, name, price) {
-        let iceLevel = document.getElementById(`ice_${id}`).value;
+        let iceLevel = activeIceLevels[id]; // Ambil dari state chips
         let cartKey = `${id}_${iceLevel}`;
 
         if (!cart[cartKey]) {
@@ -191,19 +258,20 @@
         
         cart[cartKey].qty += 1;
         updateFloatingCart();
+        resetIceChips(id); // Kembalikan chip ke bentuk default setelah ditambah
         
-        // Animasi feedback sederhana
-        const btn = event.currentTarget;
+        // Animasi feedback tombol
+        const btn = document.getElementById(`btn_add_${id}`);
         const originalText = btn.innerText;
-        btn.innerText = "✓ Masuk";
+        btn.innerText = "✓ Dimasukkan";
         btn.classList.replace('bg-secondary', 'bg-taupe');
         setTimeout(() => {
             btn.innerText = originalText;
             btn.classList.replace('bg-taupe', 'bg-secondary');
-        }, 1000);
+        }, 800);
     }
 
-    // Ubah Kuantitas di dalam Modal Keranjang
+    // Ubah Kuantitas di Modal
     function adjustQty(cartKey, delta) {
         if (cart[cartKey]) {
             cart[cartKey].qty += delta;
@@ -215,7 +283,7 @@
         }
     }
 
-    // Update Floating Button & Total Harga
+    // Update Banner Mengambang
     function updateFloatingCart() {
         let totalItems = 0;
         let totalPrice = 0;
@@ -237,10 +305,10 @@
         }
     }
 
-    // --- LOGIC MODAL ---
+    // --- MODAL KERANJANG ---
     function openCartModal() {
         if (!document.getElementById('custName').value || !document.getElementById('custWA').value || !document.getElementById('custAddress').value) {
-            alert('Mohon lengkapi Informasi Pengiriman terlebih dahulu.'); 
+            alert('Mohon lengkapi Informasi Pengiriman / Pengambilan terlebih dahulu.'); 
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
@@ -261,11 +329,14 @@
 
         Object.keys(cart).forEach(key => {
             let item = cart[key];
+            // Sembunyikan label "Normal Ice" di modal agar desain bersih
+            let iceLabelUI = item.iceLevel === 'Normal Ice' ? '' : `<p class="text-[11px] font-bold text-taupe mt-0.5 bg-lightBeige inline-block px-1.5 py-0.5 rounded">${item.iceLevel}</p>`;
+            
             html += `
             <div class="flex justify-between items-center py-3 border-b border-lightBeige last:border-0">
                 <div class="flex-1 pr-4">
                     <p class="font-bold text-primary text-sm">${item.name}</p>
-                    <p class="text-xs text-taupe font-medium mt-0.5">${item.iceLevel}</p>
+                    ${iceLabelUI}
                     <p class="text-sm font-semibold text-secondary mt-1">Rp ${(item.price * item.qty).toLocaleString('id-ID')}</p>
                 </div>
                 <div class="flex items-center space-x-3 bg-ivory rounded-lg border border-lightBeige p-1">
@@ -278,9 +349,10 @@
         container.innerHTML = html;
     }
 
-    // --- PENGIRIMAN DATA KE GAS ---
+    // --- PENGIRIMAN DATA KE GAS & WHATSAPP ---
     async function submitOrder() {
-        const method = document.getElementById('paymentMethod').value; // Otomatis QRIS
+        const method = document.getElementById('paymentMethod').value;
+        const orderType = document.querySelector('input[name="orderType"]:checked').value;
 
         document.getElementById('loadingOverlay').classList.remove('hidden');
         document.getElementById('loadingOverlay').classList.add('flex');
@@ -289,7 +361,14 @@
         let totalPesanan = cartArray.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
         // FORMAT LIST PESANAN UNTUK WHATSAPP
-        let orderDetailsWA = cartArray.map(item => `- ${item.name} (${item.iceLevel}) x${item.qty}`).join('\n');
+        // Jika Normal Ice, tulis menu saja. Jika tidak, tambahkan (Less Ice/No Ice)
+        let orderDetailsWA = cartArray.map(item => {
+            if(item.iceLevel === 'Normal Ice') {
+                return `• ${item.name} x${item.qty}`;
+            } else {
+                return `• ${item.name} (${item.iceLevel}) x${item.qty}`;
+            }
+        }).join('\n');
 
         const payload = {
             action: 'new_order',
@@ -310,12 +389,15 @@
             const result = await response.json();
             
             if (result.status === 'success') {
-                // Generate Pesan WhatsApp dengan Detail Menu
-                let waText = `Halo Kintoun Coffee!\nSaya sudah melakukan order via Web dengan detail:\n\n*Nama:* ${payload.name}\n*Alamat:* ${payload.address}\n\n*Pesanan:*\n${orderDetailsWA}\n\n*Total:* Rp ${payload.total.toLocaleString('id-ID')}\n*Metode:* ${payload.paymentMethod}\n\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
+                // Template WhatsApp yang sangat persis dengan permintaan
+                let waText = `Halo Kintoun Coffee!\nSaya sudah melakukan order via Web dengan detail:\n\nNama: ${payload.name}\nAlamat: ${payload.address}\n\nPesanan:\n${orderDetailsWA}\n\nTotal: Rp ${payload.total.toLocaleString('id-ID')}\nMetode: ${payload.paymentMethod}\nPick Up: ${orderType}\n\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
                 
                 const waUrl = `https://wa.me/${NOMOR_WA_CAFE}?text=${encodeURIComponent(waText)}`;
                 
-                alert('Pesanan Berhasil Disubmit! Anda akan diarahkan ke WhatsApp untuk meminta kode QRIS.');
+                // Matikan overlay loading
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                document.getElementById('loadingOverlay').classList.remove('flex');
+                
                 window.location.href = waUrl;
             } else {
                  alert('Terjadi kesalahan pada server Google. Coba lagi.');
