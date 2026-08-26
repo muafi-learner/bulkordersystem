@@ -124,7 +124,7 @@
                 <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             <h3 class="text-lg font-bold text-primary mb-2">Info Penyajian</h3>
-            <p class="text-sm text-secondary leading-relaxed mb-6">Es akan dimasukkan ke cup ketika person/delivery sudah sampai di lokasi ya.... Jadi tolong tunggu 5-10 menit di lokasi Kak!</p>
+            <p class="text-sm text-secondary leading-relaxed mb-6">Es baru akan ditambahkan saat Kakak atau kurir pengantar tiba di toko. Mohon tunggu 5-10 menit untuk proses penyiapannya ya Kak</p>
             <button onclick="confirmIceEdu()" class="w-full bg-primary text-ivory font-bold py-3 rounded-xl hover:bg-secondary transition outline-none">
                 Mengerti & Lanjutkan
             </button>
@@ -206,7 +206,7 @@
         const pickup = document.getElementById('pickUpMethod').value;
 
         if (!name || !wa || !pickup) {
-            showCustomAlert('Mohon isi Nama Lengkap, Nomor WhatsApp, dan Metode Pemesanan terlebih dahulu Kak.');
+            showCustomAlert('Isi Nama Lengkap, Nomor WhatsApp, dan Metode Pemesanan lebih dulu Kak!');
             return;
         }
 
