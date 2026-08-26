@@ -104,32 +104,14 @@
                 <!-- Payment Section -->
                 <div class="border-t border-lightBeige pt-6">
                     <h3 class="text-sm font-bold text-taupe uppercase tracking-wider mb-3">Metode Pembayaran</h3>
-                    <select id="paymentMethod" onchange="togglePaymentUI()" class="w-full p-3 bg-white border border-lightBeige rounded-xl text-sm font-medium text-primary outline-none focus:border-secondary mb-4 shadow-sm">
-                        <option value="">-- Pilih Pembayaran --</option>
-                        <option value="Transfer BCA">Transfer Bank (BCA)</option>
-                        <option value="QRIS">QRIS (Manual via Kasir)</option>
-                    </select>
+                    
+                    <!-- Nilai Default Metode Pembayaran (Tersembunyi) -->
+                    <input type="hidden" id="paymentMethod" value="QRIS">
 
-                    <!-- UI BCA -->
-                    <div id="uiBCA" class="hidden mb-4 bg-white p-5 rounded-xl border border-lightBeige shadow-sm">
-                        
-                        <!-- Alert Wording -->
-                        <div class="bg-muted bg-opacity-20 border border-muted p-3 rounded-lg mb-4">
-                            <p class="text-xs text-secondary leading-relaxed"><span class="font-bold">⚠️ Perhatian:</span> Untuk mempercepat proses audit toko, mohon pastikan nama pemilik rekening pengirim sama dengan nama pada form pengiriman.</p>
-                        </div>
-
-                        <p class="text-xs text-taupe mb-1">Transfer ke Rekening BCA:</p>
-                        <p class="font-bold text-xl text-primary mb-1">1234567890</p>
-                        <p class="text-sm font-semibold mb-4 text-secondary">a.n Kintoun Coffee</p>
-                        
-                        <label class="block text-xs font-bold text-taupe uppercase tracking-wider mb-2">Upload Bukti Transfer</label>
-                        <input type="file" id="uploadProof" accept="image/*" class="w-full text-sm text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-ivory hover:file:bg-secondary">
-                    </div>
-
-                    <!-- UI QRIS -->
-                    <div id="uiQRIS" class="hidden mb-4 bg-white p-5 rounded-xl border border-lightBeige shadow-sm text-center">
-                        <p class="text-sm font-semibold text-primary mb-2">Checkout sekarang, bayar nanti.</p>
-                        <p class="text-xs text-secondary leading-relaxed">Pesanan Anda akan masuk ke sistem kasir. Silakan klik tombol Chat WA setelah ini untuk meminta kode QRIS dari kasir kami.</p>
+                    <!-- UI QRIS (Otomatis tampil & terpilih) -->
+                    <div class="mb-4 bg-white p-5 rounded-xl border border-lightBeige shadow-sm text-center">
+                        <p class="text-sm font-bold text-primary mb-2">QRIS (Manual via Kasir)</p>
+                        <p class="text-xs text-secondary leading-relaxed">Checkout sekarang, bayar nanti. Pesanan Anda akan otomatis masuk ke sistem kasir. Silakan klik tombol konfirmasi di bawah untuk meminta kode QRIS melalui WhatsApp.</p>
                     </div>
                 </div>
             </div>
@@ -155,7 +137,6 @@
 
 <script>
     // --- KONFIGURASI PENTING ---
-    // PASTIKAN ANDA MENGGANTI URL INI DENGAN URL WEB APP GAS ANDA!
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygdcHwVBz0ihp3cYKqd1wf7NFK6h0OMYd-O95bkWpCgwP7Xb8taQKMZSX15ovy3cz8mA/exec';
     const NOMOR_WA_CAFE = '628213904471'; 
 
@@ -214,7 +195,7 @@
         container.innerHTML = html;
     }
 
-    // Logic Tambah ke Keranjang (Mendukung Variasi Es)
+    // Logic Tambah ke Keranjang
     function addToCart(id, name, price) {
         let iceLevel = document.getElementById(`ice_${id}`).value;
         let cartKey = `${id}_${iceLevel}`;
@@ -267,13 +248,12 @@
             document.getElementById('modalTotalPrice').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
         } else {
             floatingCart.classList.add('hidden');
-            closeCartModal(); // Tutup modal otomatis jika keranjang kosong
+            closeCartModal(); 
         }
     }
 
-    // --- LOGIC MODAL & PEMBAYARAN ---
+    // --- LOGIC MODAL ---
     function openCartModal() {
-        // Cek data pelanggan dulu sebelum buka keranjang
         if (!document.getElementById('custName').value || !document.getElementById('custWA').value || !document.getElementById('custAddress').value) {
             alert('Mohon lengkapi Informasi Pengiriman terlebih dahulu.'); 
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -313,49 +293,13 @@
         container.innerHTML = html;
     }
 
-    function togglePaymentUI() {
-        const method = document.getElementById('paymentMethod').value;
-        const btnSubmit = document.getElementById('btnSubmitOrder');
-        
-        document.getElementById('uiBCA').classList.add('hidden');
-        document.getElementById('uiQRIS').classList.add('hidden');
-
-        if (method === 'Transfer BCA') {
-            document.getElementById('uiBCA').classList.remove('hidden');
-        } else if (method === 'QRIS') {
-            document.getElementById('uiQRIS').classList.remove('hidden');
-        }
-    }
-
     // --- PENGIRIMAN DATA KE GAS ---
-    function getBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-    }
-
     async function submitOrder() {
-        const method = document.getElementById('paymentMethod').value;
-        if (!method) {
-            alert('Harap pilih Metode Pembayaran!'); return;
-        }
-
-        let fileBase64 = null;
-        if (method === 'Transfer BCA') {
-            const fileInput = document.getElementById('uploadProof');
-            if (fileInput.files.length === 0) {
-                alert('Harap upload bukti transfer BCA!'); return;
-            }
-            fileBase64 = await getBase64(fileInput.files[0]);
-        }
+        const method = document.getElementById('paymentMethod').value; // Otomatis QRIS
 
         document.getElementById('loadingOverlay').classList.remove('hidden');
         document.getElementById('loadingOverlay').classList.add('flex');
 
-        // Menyiapkan array keranjang untuk dikirim ke Sheet
         let cartArray = Object.values(cart);
         let totalPesanan = cartArray.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
@@ -367,7 +311,7 @@
             cart: cartArray,
             total: totalPesanan,
             paymentMethod: method,
-            fileBase64: fileBase64
+            fileBase64: null // BCA ditiadakan, tidak ada file
         };
 
         try {
@@ -378,17 +322,12 @@
             const result = await response.json();
             
             if (result.status === 'success') {
-                // Generate Pesan WhatsApp
-                let waText = `Halo Kintoun Coffee!\nSaya sudah melakukan order via Web dengan detail:\n\n*Nama:* ${payload.name}\n*Alamat:* ${payload.address}\n*Total:* Rp ${payload.total.toLocaleString('id-ID')}\n*Metode:* ${payload.paymentMethod}\n`;
-                if(method === 'QRIS') {
-                    waText += `\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
-                } else {
-                    waText += `\n_Bukti transfer sudah saya upload di aplikasi._`;
-                }
+                // Generate Pesan WhatsApp khusus QRIS
+                let waText = `Halo Kintoun Coffee!\nSaya sudah melakukan order via Web dengan detail:\n\n*Nama:* ${payload.name}\n*Alamat:* ${payload.address}\n*Total:* Rp ${payload.total.toLocaleString('id-ID')}\n*Metode:* ${payload.paymentMethod}\n\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
                 
                 const waUrl = `https://wa.me/${NOMOR_WA_CAFE}?text=${encodeURIComponent(waText)}`;
                 
-                alert('Pesanan Berhasil Disubmit! Anda akan diarahkan ke WhatsApp untuk konfirmasi kasir.');
+                alert('Pesanan Berhasil Disubmit! Anda akan diarahkan ke WhatsApp untuk meminta kode QRIS.');
                 window.location.href = waUrl;
             } else {
                  alert('Terjadi kesalahan pada server Google. Coba lagi.');
