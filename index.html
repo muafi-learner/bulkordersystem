@@ -135,7 +135,7 @@
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygdcHwVBz0ihp3cYKqd1wf7NFK6h0OMYd-O95bkWpCgwP7Xb8taQKMZSX15ovy3cz8mA/exec';
     const NOMOR_WA_CAFE = '628213904471'; 
 
-    // DATA MENU (Ganti link gambar di properti 'img' dengan foto produk aslimu)
+    // DATA MENU: URL ini akan kita ganti dengan URL dari GitHub nanti
     const menuData = [
         { category: 'Kintoun Signature', items: [
             { id: 'S1', name: 'Kopi Susu Kintoun', price: 14900, img: 'https://i.postimg.cc/59DGvx9w/Kopi-Susu-Kintoun.png' },
@@ -182,26 +182,26 @@
             cat.items.forEach(item => {
                 activeIceLevels[item.id] = 'Normal Ice';
 
+                // PERUBAHAN LAYOUT: Gambar di Kiri (w-24), Konten di Kanan (flex-1)
                 html += `
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-lightBeige flex flex-col group">
-                    <div class="flex items-center space-x-4 mb-4">
-                        <img src="${item.img}" alt="${item.name}" class="w-[72px] h-[90px] object-cover rounded-xl bg-ivory">
-                        <div class="flex-1">
-                            <p class="font-bold text-primary text-[15px] leading-tight">${item.name}</p>
-                            <p class="text-[13px] font-semibold text-secondary mt-1">Rp ${item.price.toLocaleString('id-ID')}</p>
-                        </div>
-                    </div>
+                <div class="bg-white p-3 sm:p-4 rounded-[20px] shadow-sm border border-lightBeige flex items-center space-x-3 sm:space-x-4 group">
+                    <img src="${item.img}" alt="${item.name}" loading="lazy" class="w-20 sm:w-24 h-28 sm:h-32 object-contain flex-shrink-0 drop-shadow-sm">
                     
-                    <div class="flex space-x-2 items-center w-full">
-                        <button id="chip_less_${item.id}" onclick="toggleIce('${item.id}', 'Less Ice')" class="ice-chip-${item.id} flex-1 text-[12px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">
-                            Less Ice
-                        </button>
-                        <button id="chip_no_${item.id}" onclick="toggleIce('${item.id}', 'No Ice')" class="ice-chip-${item.id} flex-1 text-[12px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">
-                            No Ice
-                        </button>
-                        <button id="btn_add_${item.id}" onclick="addToCart('${item.id}', '${item.name}', ${item.price})" class="w-[30%] bg-primary text-ivory text-[13px] font-bold py-2 rounded-lg hover:bg-secondary transition shadow-sm outline-none">
-                            Tambah
-                        </button>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <p class="font-extrabold text-primary text-[15px] sm:text-[16px] leading-tight">${item.name}</p>
+                        <p class="text-[13px] font-semibold text-secondary mt-1 mb-3">Rp ${item.price.toLocaleString('id-ID')}</p>
+                        
+                        <div class="flex space-x-1.5 w-full">
+                            <button id="chip_less_${item.id}" onclick="toggleIce('${item.id}', 'Less Ice')" class="ice-chip-${item.id} flex-1 text-[10px] sm:text-[11px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">
+                                Less Ice
+                            </button>
+                            <button id="chip_no_${item.id}" onclick="toggleIce('${item.id}', 'No Ice')" class="ice-chip-${item.id} flex-1 text-[10px] sm:text-[11px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">
+                                No Ice
+                            </button>
+                            <button id="btn_add_${item.id}" onclick="addToCart('${item.id}', '${item.name}', ${item.price})" class="flex-[1.2] bg-primary text-ivory text-[11px] sm:text-[12px] font-bold py-2 rounded-lg hover:bg-secondary transition shadow-sm outline-none">
+                                Tambah
+                            </button>
+                        </div>
                     </div>
                 </div>`;
             });
@@ -210,11 +210,9 @@
         container.innerHTML = html;
     }
 
-    // Logic Chips Mutually Exclusive yang baru (samar ke menyala)
     function toggleIce(itemId, selectedLevel) {
         let currentLevel = activeIceLevels[itemId];
 
-        // Reset semua chip ke status samar
         document.querySelectorAll(`.ice-chip-${itemId}`).forEach(chip => {
             chip.classList.remove('bg-primary', 'text-ivory', 'border-primary');
             chip.classList.add('bg-ivory', 'text-taupe', 'border-lightBeige');
