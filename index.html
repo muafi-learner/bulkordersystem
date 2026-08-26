@@ -32,20 +32,19 @@
     </script>
     <style>
         ::-webkit-scrollbar { width: 0px; background: transparent; }
-        /* Background utama diset ke biru gelap */
-        body { -ms-overflow-style: none; scrollbar-width: none; background-color: #00263F; } 
+        body { -ms-overflow-style: none; scrollbar-width: none; } 
         select:invalid { color: #C0C9CE; }
     </style>
 </head>
-<body class="text-primary font-sans pb-24 min-h-screen">
+<body class="bg-primary text-primary font-sans min-h-screen">
 
     <header class="w-full max-w-md mx-auto relative pointer-events-none">
         <img src="https://github.com/muafi-learner/kintoun-order-system-deilvery/blob/main/Background%20Depan%20v.1.png?raw=true" alt="Kintoun Coffee Hero" class="w-full h-auto object-cover">
     </header>
 
-    <main class="max-w-md mx-auto px-5 relative z-20 -mt-0 sm:-mt-4">
+    <main class="max-w-md mx-auto px-5 relative z-20 -mt-0 sm:-mt-6">
         
-        <section id="formSection" class="mb-10 scroll-mt-10">
+        <section id="formSection" class="scroll-mt-10 pb-6">
             <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl border border-lightBeige space-y-6">
                 
                 <div>
@@ -73,7 +72,7 @@
             </div>
         </section>
 
-        <section id="menuContainer" class="hidden transition-all duration-500 ease-in-out"></section>
+        <section id="menuContainer" class="hidden transition-all duration-500 ease-in-out pb-32"></section>
     </main>
 
     <div id="floatingCart" class="fixed bottom-0 left-0 w-full p-4 bg-primary bg-opacity-90 backdrop-blur-md border-t border-secondary hidden z-40">
