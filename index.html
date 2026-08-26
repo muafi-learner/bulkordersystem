@@ -145,6 +145,19 @@
         </div>
     </div>
 
+    <div id="customAlertPopup" class="fixed inset-0 bg-primary bg-opacity-60 backdrop-blur-sm hidden justify-center items-center z-[80] p-4 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-slide-up text-center border border-lightBeige">
+            <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h3 class="text-lg font-bold text-primary mb-2">Perhatian</h3>
+            <p id="customAlertMessage" class="text-sm text-secondary leading-relaxed mb-6">Pesan peringatan di sini.</p>
+            <button onclick="closeCustomAlert()" class="w-full bg-primary text-ivory font-bold py-3 rounded-xl hover:bg-secondary transition outline-none">
+                Mengerti
+            </button>
+        </div>
+    </div>
+
     <div id="loadingOverlay" class="fixed inset-0 bg-primary bg-opacity-80 backdrop-blur-sm hidden flex-col justify-center items-center z-[70]">
         <div class="w-12 h-12 border-4 border-ivory border-t-taupe rounded-full animate-spin mb-4"></div>
         <p class="font-bold text-ivory tracking-wide">Memproses Pesanan...</p>
@@ -174,29 +187,38 @@
     let cart = {}; 
     let activeIceLevels = {}; 
 
-    // Langkah 1: Validasi Input dan Tampilkan Pop-up Edukasi Es
+    // --- FUNGSI CUSTOM ALERT ---
+    function showCustomAlert(message) {
+        document.getElementById('customAlertMessage').innerText = message;
+        document.getElementById('customAlertPopup').classList.remove('hidden');
+        document.getElementById('customAlertPopup').classList.add('flex');
+    }
+
+    function closeCustomAlert() {
+        document.getElementById('customAlertPopup').classList.add('hidden');
+        document.getElementById('customAlertPopup').classList.remove('flex');
+    }
+
+    // Langkah 1: Validasi Input 
     function proceedToMenu() {
         const name = document.getElementById('custName').value.trim();
         const wa = document.getElementById('custWA').value.trim();
         const pickup = document.getElementById('pickUpMethod').value;
 
         if (!name || !wa || !pickup) {
-            alert('Mohon isi Nama Lengkap, Nomor WhatsApp, dan Metode Pick Up terlebih dahulu kak.');
+            showCustomAlert('Mohon isi Nama Lengkap, Nomor WhatsApp, dan Metode Pemesanan terlebih dahulu Kak.');
             return;
         }
 
-        // Tampilkan Custom Modal (bukan alert bawaan)
         document.getElementById('iceEduPopup').classList.remove('hidden');
         document.getElementById('iceEduPopup').classList.add('flex');
     }
 
-    // Langkah 2: Konfirmasi Pop-up Edukasi Es dan Lanjut ke Menu
+    // Langkah 2: Konfirmasi Pop-up Edukasi
     function confirmIceEdu() {
-        // Sembunyikan Pop-up
         document.getElementById('iceEduPopup').classList.add('hidden');
         document.getElementById('iceEduPopup').classList.remove('flex');
 
-        // Kunci Input dan Tampilkan Menu
         document.getElementById('custName').disabled = true;
         document.getElementById('custWA').disabled = true;
         document.getElementById('pickUpMethod').disabled = true;
@@ -330,7 +352,9 @@
 
     function openCartModal() {
         if (!document.getElementById('custName').value || !document.getElementById('custWA').value || !document.getElementById('pickUpMethod').value) {
-            alert('Data pemesan tidak lengkap.'); return;
+            showCustomAlert('Mohon lengkapi Informasi Pesanan terlebih dahulu Kak.');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
         }
         renderCartModalItems();
         document.getElementById('cartModal').classList.remove('hidden');
@@ -366,7 +390,6 @@
         container.innerHTML = html;
     }
 
-    // --- POPUP QRIS ---
     function showQRISPopup() {
         document.getElementById('qrisPopup').classList.remove('hidden');
         document.getElementById('qrisPopup').classList.add('flex');
@@ -377,7 +400,6 @@
         document.getElementById('qrisPopup').classList.remove('flex');
     }
 
-    // --- PENGIRIMAN DATA ---
     async function submitOrder() {
         closeQRISPopup(); 
         
@@ -426,12 +448,12 @@
                 
                 window.location.href = waUrl;
             } else {
-                 alert('Terjadi kesalahan pada server Google. Coba lagi.');
+                 showCustomAlert('Terjadi kesalahan pada server Google. Silakan coba lagi.');
                  document.getElementById('loadingOverlay').classList.add('hidden');
                  document.getElementById('loadingOverlay').classList.remove('flex');
             }
         } catch (error) {
-            alert('Terjadi kesalahan koneksi. Pastikan internet Anda stabil.');
+            showCustomAlert('Terjadi kesalahan koneksi. Pastikan internet Kakak stabil ya.');
             document.getElementById('loadingOverlay').classList.add('hidden');
             document.getElementById('loadingOverlay').classList.remove('flex');
         }
