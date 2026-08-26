@@ -11,7 +11,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Injeksi Color Palette Khusus
         tailwind.config = {
             theme: {
                 extend: {
@@ -32,7 +31,6 @@
         }
     </script>
     <style>
-        /* Sembunyikan scrollbar untuk tampilan yang lebih sleek */
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         body { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -134,31 +132,30 @@
     </div>
 
 <script>
-    // --- KONFIGURASI PENTING ---
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygdcHwVBz0ihp3cYKqd1wf7NFK6h0OMYd-O95bkWpCgwP7Xb8taQKMZSX15ovy3cz8mA/exec';
     const NOMOR_WA_CAFE = '628213904471'; 
 
+    // DATA MENU (Ganti link gambar di properti 'img' dengan foto produk aslimu)
     const menuData = [
         { category: 'Kintoun Signature', items: [
-            { id: 'S1', name: 'Kopi Susu Kintoun', price: 13545 },
-            { id: 'S2', name: 'Sea Salt Butterscotch', price: 15364 },
-            { id: 'S3', name: 'Es Kopi Susu Tiramisu', price: 15364 },
-            { id: 'S4', name: 'Double Shot Iced Shaken', price: 18000 }
+            { id: 'S1', name: 'Kopi Susu Kintoun', price: 14900, img: 'https://placehold.co/200x250/EEEBE1/00263F?text=Kopi+Susu' },
+            { id: 'S2', name: 'Sea Salt Butterscotch', price: 16900, img: 'https://placehold.co/200x250/EEEBE1/00263F?text=Butterscotch' },
+            { id: 'S3', name: 'Es Kopi Susu Tiramisu', price: 16900, img: 'https://placehold.co/200x250/EEEBE1/00263F?text=Tiramisu' },
+            { id: 'S4', name: 'Double Shot Iced Shaken', price: 19800, img: 'https://placehold.co/200x250/EEEBE1/00263F?text=Iced+Shaken' }
         ]},
         { category: 'Kintoun Black Series', items: [
-            { id: 'B1', name: 'Americano Iced Black', price: 9909 },
-            { id: 'B2', name: 'Sunset Peach Americano', price: 15273 }
+            { id: 'B1', name: 'Americano Iced Black', price: 10900, img: 'https://placehold.co/200x250/EEEBE1/00263F?text=Americano' },
+            { id: 'B2', name: 'Sunset Peach Americano', price: 16800, img: 'https://placehold.co/200x250/EEEBE1/00263F?text=Sunset+Peach' }
         ]},
         { category: 'Selain Kopi', items: [
-            { id: 'N1', name: 'Matcha Sea Salt', price: 15273 },
-            { id: 'N2', name: 'Choc-Cloud', price: 15273 }
+            { id: 'N1', name: 'Matcha Sea Salt', price: 16800, img: 'https://placehold.co/200x250/EEEBE1/00263F?text=Matcha' },
+            { id: 'N2', name: 'Choc-Cloud', price: 16800, img: 'https://placehold.co/200x250/EEEBE1/00263F?text=Choc+Cloud' }
         ]}
     ];
 
     let cart = {}; 
-    let activeIceLevels = {}; // Menyimpan state pilihan es sementara sebelum ditekan tombol tambah
+    let activeIceLevels = {}; 
 
-    // Toggle Alamat berdasarkan Delivery/In Person
     function toggleAddress() {
         const orderType = document.querySelector('input[name="orderType"]:checked').value;
         const addressContainer = document.getElementById('addressContainer');
@@ -175,7 +172,6 @@
         }
     }
 
-    // Merender Daftar Menu & Chips
     function renderMenu() {
         const container = document.getElementById('menuContainer');
         let html = '';
@@ -184,30 +180,29 @@
             html += `<h3 class="text-sm font-bold text-taupe uppercase tracking-wider mt-8 mb-4">${cat.category}</h3>`;
             html += `<div class="space-y-4">`;
             cat.items.forEach(item => {
-                // Inisialisasi state es untuk menu ini
                 activeIceLevels[item.id] = 'Normal Ice';
 
                 html += `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-lightBeige flex flex-col relative overflow-hidden group">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <p class="font-bold text-primary text-base">${item.name}</p>
-                            <p class="text-sm font-semibold text-secondary mt-0.5">Rp ${item.price.toLocaleString('id-ID')}</p>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-lightBeige flex flex-col group">
+                    <div class="flex items-center space-x-4 mb-4">
+                        <img src="${item.img}" alt="${item.name}" class="w-[72px] h-[90px] object-cover rounded-xl bg-ivory">
+                        <div class="flex-1">
+                            <p class="font-bold text-primary text-[15px] leading-tight">${item.name}</p>
+                            <p class="text-[13px] font-semibold text-secondary mt-1">Rp ${item.price.toLocaleString('id-ID')}</p>
                         </div>
                     </div>
                     
-                    <div class="flex space-x-2 mt-1 mb-4">
-                        <button id="chip_less_${item.id}" onclick="toggleIce('${item.id}', 'Less Ice')" class="ice-chip-${item.id} text-[11px] font-bold px-3 py-1.5 rounded-full border border-lightBeige text-secondary hover:bg-lightBeige transition outline-none">
+                    <div class="flex space-x-2 items-center w-full">
+                        <button id="chip_less_${item.id}" onclick="toggleIce('${item.id}', 'Less Ice')" class="ice-chip-${item.id} flex-1 text-[12px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">
                             Less Ice
                         </button>
-                        <button id="chip_no_${item.id}" onclick="toggleIce('${item.id}', 'No Ice')" class="ice-chip-${item.id} text-[11px] font-bold px-3 py-1.5 rounded-full border border-lightBeige text-secondary hover:bg-lightBeige transition outline-none">
+                        <button id="chip_no_${item.id}" onclick="toggleIce('${item.id}', 'No Ice')" class="ice-chip-${item.id} flex-1 text-[12px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">
                             No Ice
                         </button>
+                        <button id="btn_add_${item.id}" onclick="addToCart('${item.id}', '${item.name}', ${item.price})" class="w-[30%] bg-primary text-ivory text-[13px] font-bold py-2 rounded-lg hover:bg-secondary transition shadow-sm outline-none">
+                            Tambah
+                        </button>
                     </div>
-
-                    <button id="btn_add_${item.id}" onclick="addToCart('${item.id}', '${item.name}', ${item.price})" class="w-full bg-secondary text-ivory text-sm font-bold py-2.5 rounded-xl hover:bg-primary transition shadow-sm outline-none">
-                        + Tambah
-                    </button>
                 </div>`;
             });
             html += `</div>`;
@@ -215,41 +210,37 @@
         container.innerHTML = html;
     }
 
-    // Logika Klik Chips (Mutually Exclusive)
+    // Logic Chips Mutually Exclusive yang baru (samar ke menyala)
     function toggleIce(itemId, selectedLevel) {
         let currentLevel = activeIceLevels[itemId];
 
-        // Reset semua style chip untuk item ini
+        // Reset semua chip ke status samar
         document.querySelectorAll(`.ice-chip-${itemId}`).forEach(chip => {
             chip.classList.remove('bg-primary', 'text-ivory', 'border-primary');
-            chip.classList.add('border-lightBeige', 'text-secondary');
+            chip.classList.add('bg-ivory', 'text-taupe', 'border-lightBeige');
         });
 
-        // Jika diklik chip yang sama (toggle off) -> kembalikan ke Normal
         if (currentLevel === selectedLevel) {
-            activeIceLevels[itemId] = 'Normal Ice';
+            activeIceLevels[itemId] = 'Normal Ice'; 
         } 
-        // Jika diklik chip baru (toggle on)
         else {
             activeIceLevels[itemId] = selectedLevel;
             let targetChip = selectedLevel === 'Less Ice' ? document.getElementById(`chip_less_${itemId}`) : document.getElementById(`chip_no_${itemId}`);
-            targetChip.classList.remove('border-lightBeige', 'text-secondary');
+            targetChip.classList.remove('bg-ivory', 'text-taupe', 'border-lightBeige');
             targetChip.classList.add('bg-primary', 'text-ivory', 'border-primary');
         }
     }
 
-    // Reset Chip setelah masuk keranjang
     function resetIceChips(itemId) {
         activeIceLevels[itemId] = 'Normal Ice';
         document.querySelectorAll(`.ice-chip-${itemId}`).forEach(chip => {
             chip.classList.remove('bg-primary', 'text-ivory', 'border-primary');
-            chip.classList.add('border-lightBeige', 'text-secondary');
+            chip.classList.add('bg-ivory', 'text-taupe', 'border-lightBeige');
         });
     }
 
-    // Logic Tambah ke Keranjang
     function addToCart(id, name, price) {
-        let iceLevel = activeIceLevels[id]; // Ambil dari state chips
+        let iceLevel = activeIceLevels[id]; 
         let cartKey = `${id}_${iceLevel}`;
 
         if (!cart[cartKey]) {
@@ -258,20 +249,18 @@
         
         cart[cartKey].qty += 1;
         updateFloatingCart();
-        resetIceChips(id); // Kembalikan chip ke bentuk default setelah ditambah
+        resetIceChips(id); 
         
-        // Animasi feedback tombol
         const btn = document.getElementById(`btn_add_${id}`);
         const originalText = btn.innerText;
-        btn.innerText = "✓ Dimasukkan";
-        btn.classList.replace('bg-secondary', 'bg-taupe');
+        btn.innerText = "✓ Masuk";
+        btn.classList.replace('bg-primary', 'bg-taupe');
         setTimeout(() => {
             btn.innerText = originalText;
-            btn.classList.replace('bg-taupe', 'bg-secondary');
+            btn.classList.replace('bg-taupe', 'bg-primary');
         }, 800);
     }
 
-    // Ubah Kuantitas di Modal
     function adjustQty(cartKey, delta) {
         if (cart[cartKey]) {
             cart[cartKey].qty += delta;
@@ -283,7 +272,6 @@
         }
     }
 
-    // Update Banner Mengambang
     function updateFloatingCart() {
         let totalItems = 0;
         let totalPrice = 0;
@@ -305,7 +293,6 @@
         }
     }
 
-    // --- MODAL KERANJANG ---
     function openCartModal() {
         if (!document.getElementById('custName').value || !document.getElementById('custWA').value || !document.getElementById('custAddress').value) {
             alert('Mohon lengkapi Informasi Pengiriman / Pengambilan terlebih dahulu.'); 
@@ -329,7 +316,6 @@
 
         Object.keys(cart).forEach(key => {
             let item = cart[key];
-            // Sembunyikan label "Normal Ice" di modal agar desain bersih
             let iceLabelUI = item.iceLevel === 'Normal Ice' ? '' : `<p class="text-[11px] font-bold text-taupe mt-0.5 bg-lightBeige inline-block px-1.5 py-0.5 rounded">${item.iceLevel}</p>`;
             
             html += `
@@ -349,7 +335,6 @@
         container.innerHTML = html;
     }
 
-    // --- PENGIRIMAN DATA KE GAS & WHATSAPP ---
     async function submitOrder() {
         const method = document.getElementById('paymentMethod').value;
         const orderType = document.querySelector('input[name="orderType"]:checked').value;
@@ -360,8 +345,6 @@
         let cartArray = Object.values(cart);
         let totalPesanan = cartArray.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
-        // FORMAT LIST PESANAN UNTUK WHATSAPP
-        // Jika Normal Ice, tulis menu saja. Jika tidak, tambahkan (Less Ice/No Ice)
         let orderDetailsWA = cartArray.map(item => {
             if(item.iceLevel === 'Normal Ice') {
                 return `• ${item.name} x${item.qty}`;
@@ -389,12 +372,10 @@
             const result = await response.json();
             
             if (result.status === 'success') {
-                // Template WhatsApp yang sangat persis dengan permintaan
                 let waText = `Halo Kintoun Coffee!\nSaya sudah melakukan order via Web dengan detail:\n\nNama: ${payload.name}\nAlamat: ${payload.address}\n\nPesanan:\n${orderDetailsWA}\n\nTotal: Rp ${payload.total.toLocaleString('id-ID')}\nMetode: ${payload.paymentMethod}\nPick Up: ${orderType}\n\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
                 
                 const waUrl = `https://wa.me/${NOMOR_WA_CAFE}?text=${encodeURIComponent(waText)}`;
                 
-                // Matikan overlay loading
                 document.getElementById('loadingOverlay').classList.add('hidden');
                 document.getElementById('loadingOverlay').classList.remove('flex');
                 
@@ -411,7 +392,6 @@
         }
     }
 
-    // Inisialisasi awal
     renderMenu();
 </script>
 </body>
