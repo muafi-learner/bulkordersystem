@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kintoun Cafe - Delivery Order</title>
+    <title>Kintoun Coffee - Delivery Order</title>
     
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,7 +42,7 @@
 
     <!-- HEADER / HERO -->
     <header class="bg-primary text-ivory py-8 px-6 rounded-b-3xl shadow-md mb-6">
-        <h1 class="text-2xl font-bold tracking-tight">Kintoun Cafe</h1>
+        <h1 class="text-2xl font-bold tracking-tight">Kintoun Coffee</h1>
         <p class="text-coolGrey text-sm mt-1 font-medium">Delivery Order System</p>
     </header>
 
@@ -120,7 +120,7 @@
 
                         <p class="text-xs text-taupe mb-1">Transfer ke Rekening BCA:</p>
                         <p class="font-bold text-xl text-primary mb-1">1234567890</p>
-                        <p class="text-sm font-semibold mb-4 text-secondary">a.n Kintoun Cafe</p>
+                        <p class="text-sm font-semibold mb-4 text-secondary">a.n Kintoun Coffee</p>
                         
                         <label class="block text-xs font-bold text-taupe uppercase tracking-wider mb-2">Upload Bukti Transfer</label>
                         <input type="file" id="uploadProof" accept="image/*" class="w-full text-sm text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-ivory hover:file:bg-secondary">
@@ -379,7 +379,7 @@
             
             if (result.status === 'success') {
                 // Generate Pesan WhatsApp
-                let waText = `Halo Kintoun Cafe!\nSaya sudah melakukan order via Web dengan detail:\n\n*Nama:* ${payload.name}\n*Alamat:* ${payload.address}\n*Total:* Rp ${payload.total.toLocaleString('id-ID')}\n*Metode:* ${payload.paymentMethod}\n`;
+                let waText = `Halo Kintoun Coffee!\nSaya sudah melakukan order via Web dengan detail:\n\n*Nama:* ${payload.name}\n*Alamat:* ${payload.address}\n*Total:* Rp ${payload.total.toLocaleString('id-ID')}\n*Metode:* ${payload.paymentMethod}\n`;
                 if(method === 'QRIS') {
                     waText += `\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
                 } else {
