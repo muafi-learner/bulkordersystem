@@ -43,7 +43,7 @@
         <img src="https://github.com/muafi-learner/kintoun-order-system-deilvery/blob/main/Background%20Depan%20v.1.png?raw=true" alt="Kintoun Coffee Hero" class="w-full h-auto object-cover">
     </header>
 
-    <main class="max-w-md mx-auto px-5 relative z-20 -mt-[25%] sm:-mt-[20%]">
+    <main class="max-w-md mx-auto px-5 relative z-20 -mt-8 sm:-mt-12">
         
         <section id="formSection" class="mb-10 scroll-mt-10">
             <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl border border-lightBeige space-y-6">
@@ -186,13 +186,12 @@
     let activeIceLevels = {}; 
 
     // --- LOGIC KEYBOARD SCROLLING ---
-    // Mengangkat form ke tengah layar saat input diklik di HP
     const inputElements = ['custName', 'custWA', 'pickUpMethod'];
     inputElements.forEach(id => {
         document.getElementById(id).addEventListener('focus', () => {
             setTimeout(() => {
                 document.getElementById('formSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300); // Jeda kecil menunggu keyboard HP naik sepenuhnya
+            }, 300); 
         });
     });
 
@@ -243,7 +242,6 @@
         let html = '';
 
         menuData.forEach(cat => {
-            // Teks kategori menu diubah ke warna terang agar terlihat di background biru
             html += `<h3 class="text-sm font-bold text-lightBeige uppercase tracking-widest mt-8 mb-4">${cat.category}</h3>`;
             html += `<div class="space-y-4">`;
             cat.items.forEach(item => {
