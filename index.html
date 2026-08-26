@@ -33,8 +33,6 @@
     <style>
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         body { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Ubah warna placeholder select agar sama dengan text input */
         select:invalid { color: #C0C9CE; }
     </style>
 </head>
@@ -104,17 +102,8 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-6">
-                <div id="cartItemsContainer" class="space-y-4 mb-8">
+                <div id="cartItemsContainer" class="space-y-4">
                     </div>
-
-                <div class="border-t border-lightBeige pt-6">
-                    <h3 class="text-sm font-bold text-taupe uppercase tracking-wider mb-3">Metode Pembayaran</h3>
-                    <input type="hidden" id="paymentMethod" value="QRIS">
-                    <div class="mb-4 bg-white p-5 rounded-xl border border-lightBeige shadow-sm text-center">
-                        <p class="text-sm font-bold text-primary mb-2">QRIS</p>
-                        <p class="text-xs text-secondary leading-relaxed">Silakan klik tombol konfirmasi di bawah untuk meminta kode QRIS melalui WhatsApp.</p>
-                    </div>
-                </div>
             </div>
 
             <div class="p-6 bg-white border-t border-lightBeige rounded-b-3xl">
@@ -122,14 +111,28 @@
                     <span class="font-bold text-secondary">Total Dibayar</span>
                     <span id="modalTotalPrice" class="text-2xl font-bold text-primary">Rp 0</span>
                 </div>
-                <button id="btnSubmitOrder" onclick="submitOrder()" class="w-full bg-primary text-ivory font-bold py-4 rounded-xl hover:bg-secondary transition disabled:opacity-50 disabled:cursor-not-allowed">
-                    Proses Pesanan
+                <button id="btnSubmitOrder" onclick="showQRISPopup()" class="w-full bg-primary text-ivory font-bold py-4 rounded-xl hover:bg-secondary transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    Konfirmasi Pesanan
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="loadingOverlay" class="fixed inset-0 bg-primary bg-opacity-80 backdrop-blur-sm hidden flex-col justify-center items-center z-[60]">
+    <div id="qrisPopup" class="fixed inset-0 bg-primary bg-opacity-60 backdrop-blur-sm hidden justify-center items-center z-[60] p-4 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-slide-up text-center border border-lightBeige">
+            <div class="w-14 h-14 bg-lightBeige rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+            </div>
+            <h3 class="text-lg font-bold text-primary mb-2">Pembayaran via QRIS</h3>
+            <p class="text-sm text-secondary leading-relaxed mb-6">Untk big order, pembayaran kita via QRIS aja ya kak.... klik lanjutkan untuk meminta QRIS ke store kita</p>
+            <div class="flex space-x-3">
+                <button onclick="closeQRISPopup()" class="flex-1 bg-ivory text-taupe font-bold py-3 rounded-xl hover:bg-lightBeige transition outline-none">Batal</button>
+                <button onclick="submitOrder()" class="flex-1 bg-primary text-ivory font-bold py-3 rounded-xl hover:bg-secondary transition outline-none">Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="fixed inset-0 bg-primary bg-opacity-80 backdrop-blur-sm hidden flex-col justify-center items-center z-[70]">
         <div class="w-12 h-12 border-4 border-ivory border-t-taupe rounded-full animate-spin mb-4"></div>
         <p class="font-bold text-ivory tracking-wide">Memproses Pesanan...</p>
     </div>
@@ -158,40 +161,31 @@
     let cart = {}; 
     let activeIceLevels = {}; 
 
-    // --- LOGIC GATEKEEPER (Lanjutkan Pilih Menu) ---
     function proceedToMenu() {
         const name = document.getElementById('custName').value.trim();
         const wa = document.getElementById('custWA').value.trim();
         const pickup = document.getElementById('pickUpMethod').value;
 
-        // Validasi
         if (!name || !wa || !pickup) {
             alert('Mohon isi Nama Lengkap, Nomor WhatsApp, dan Metode Pick Up terlebih dahulu kak.');
             return;
         }
 
-        // Tampilkan Popup Edukasi Es
         alert('Es akan dimasukkan ke cup ketika person/delivery sudah sampai di lokasi yaaa.... Jadi tolong tunggu 5-10 menit di lokasi ya kak!');
 
-        // Kunci Form Input agar tidak berubah
         document.getElementById('custName').disabled = true;
         document.getElementById('custWA').disabled = true;
         document.getElementById('pickUpMethod').disabled = true;
-        
-        // Sembunyikan tombol "Lanjutkan"
         document.getElementById('btnLanjutkan').classList.add('hidden');
 
-        // Tampilkan List Menu
         const menuContainer = document.getElementById('menuContainer');
         menuContainer.classList.remove('hidden');
         
-        // Scroll halus ke arah menu
         setTimeout(() => {
             menuContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
     }
 
-    // --- RENDER MENU ---
     function renderMenu() {
         const container = document.getElementById('menuContainer');
         let html = '';
@@ -311,7 +305,6 @@
     }
 
     function openCartModal() {
-        // Pengecekan ulang sebagai pengaman
         if (!document.getElementById('custName').value || !document.getElementById('custWA').value || !document.getElementById('pickUpMethod').value) {
             alert('Data pemesan tidak lengkap.'); return;
         }
@@ -331,13 +324,13 @@
 
         Object.keys(cart).forEach(key => {
             let item = cart[key];
-            let iceLabelUI = item.iceLevel === 'Normal Ice' ? '' : `<p class="text-[11px] font-bold text-taupe mt-0.5 bg-lightBeige inline-block px-1.5 py-0.5 rounded">${item.iceLevel}</p>`;
+            // Layout inline untuk Less Ice/No Ice (di sebelah nama menu)
+            let iceLabelUI = item.iceLevel === 'Normal Ice' ? '' : ` <span class="text-taupe font-medium text-[13px]">(${item.iceLevel})</span>`;
             
             html += `
             <div class="flex justify-between items-center py-3 border-b border-lightBeige last:border-0">
                 <div class="flex-1 pr-4">
-                    <p class="font-bold text-primary text-sm">${item.name}</p>
-                    ${iceLabelUI}
+                    <p class="font-bold text-primary text-sm">${item.name}${iceLabelUI}</p>
                     <p class="text-sm font-semibold text-secondary mt-1">Rp ${(item.price * item.qty).toLocaleString('id-ID')}</p>
                 </div>
                 <div class="flex items-center space-x-3 bg-ivory rounded-lg border border-lightBeige p-1">
@@ -350,8 +343,22 @@
         container.innerHTML = html;
     }
 
+    // --- POPUP QRIS ---
+    function showQRISPopup() {
+        document.getElementById('qrisPopup').classList.remove('hidden');
+        document.getElementById('qrisPopup').classList.add('flex');
+    }
+
+    function closeQRISPopup() {
+        document.getElementById('qrisPopup').classList.add('hidden');
+        document.getElementById('qrisPopup').classList.remove('flex');
+    }
+
+    // --- PENGIRIMAN DATA ---
     async function submitOrder() {
-        const method = document.getElementById('paymentMethod').value;
+        closeQRISPopup(); // Tutup popup konfirmasi
+        
+        const method = 'QRIS'; // Hardcode karena tidak ada opsi lain
         const pickupMethod = document.getElementById('pickUpMethod').value;
 
         document.getElementById('loadingOverlay').classList.remove('hidden');
@@ -372,7 +379,7 @@
             action: 'new_order',
             name: document.getElementById('custName').value,
             wa: document.getElementById('custWA').value,
-            address: pickupMethod, // Menggunakan kolom address di Google Sheet untuk menyimpan data Pick Up
+            address: pickupMethod, 
             cart: cartArray,
             total: totalPesanan,
             paymentMethod: method,
@@ -387,7 +394,6 @@
             const result = await response.json();
             
             if (result.status === 'success') {
-                // Teks WA yang dirapikan tanpa alamat
                 let waText = `Halo Kintoun Coffee!\nSaya sudah melakukan order via Web dengan detail:\n\nNama: ${payload.name}\nPick Up: ${payload.address}\n\nPesanan:\n${orderDetailsWA}\n\nTotal: Rp ${payload.total.toLocaleString('id-ID')}\nMetode: ${payload.paymentMethod}\n\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
                 
                 const waUrl = `https://wa.me/${NOMOR_WA_CAFE}?text=${encodeURIComponent(waText)}`;
