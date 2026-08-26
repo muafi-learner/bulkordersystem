@@ -33,6 +33,9 @@
     <style>
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         body { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Ubah warna placeholder select agar sama dengan text input */
+        select:invalid { color: #C0C9CE; }
     </style>
 </head>
 <body class="bg-ivory text-primary font-sans pb-24">
@@ -47,32 +50,34 @@
         <section class="mb-8">
             <h2 class="text-sm font-bold text-taupe uppercase tracking-wider mb-4">Informasi Pesanan</h2>
             
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-lightBeige space-y-5">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-lightBeige space-y-6">
                 
-                <div class="bg-lightBeige p-1.5 rounded-xl flex space-x-2">
-                    <label class="flex-1 cursor-pointer relative">
-                        <input type="radio" name="orderType" value="Delivery" class="peer sr-only" checked onchange="toggleAddress()">
-                        <div class="text-center py-2 rounded-lg text-sm font-bold text-secondary peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition">Delivery</div>
-                    </label>
-                    <label class="flex-1 cursor-pointer relative">
-                        <input type="radio" name="orderType" value="In Person" class="peer sr-only" onchange="toggleAddress()">
-                        <div class="text-center py-2 rounded-lg text-sm font-bold text-secondary peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition">In Person</div>
-                    </label>
+                <div>
+                    <input type="text" id="custName" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-primary text-sm font-medium disabled:opacity-50 disabled:bg-gray-50" placeholder="Nama Lengkap">
+                </div>
+                
+                <div>
+                    <input type="number" id="custWA" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-primary text-sm font-medium disabled:opacity-50 disabled:bg-gray-50" placeholder="Nomor WhatsApp (Cth: 0812...)">
                 </div>
 
-                <div>
-                    <input type="text" id="custName" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-sm font-medium" placeholder="Nama Lengkap">
+                <div class="relative">
+                    <select id="pickUpMethod" required class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition text-primary text-sm font-medium appearance-none cursor-pointer disabled:opacity-50 disabled:bg-gray-50 disabled:cursor-not-allowed">
+                        <option value="" disabled selected hidden>Pilih Metode Pick Up</option>
+                        <option value="Delivery By Pemesan" class="text-primary">Delivery By Pemesan</option>
+                        <option value="In Person" class="text-primary">In Person</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-secondary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
                 </div>
-                <div>
-                    <input type="number" id="custWA" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-sm font-medium" placeholder="Nomor WhatsApp (Cth: 0812...)">
-                </div>
-                <div id="addressContainer" class="transition-all duration-300">
-                    <textarea id="custAddress" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-sm font-medium resize-none h-14" placeholder="Alamat Pengiriman Lengkap"></textarea>
-                </div>
+
+                <button id="btnLanjutkan" onclick="proceedToMenu()" class="w-full bg-primary text-ivory text-sm font-bold py-3.5 rounded-xl hover:bg-secondary transition shadow-sm outline-none mt-2">
+                    Lanjutkan Pilih Menu
+                </button>
             </div>
         </section>
 
-        <section id="menuContainer" class="mb-10"></section>
+        <section id="menuContainer" class="mb-10 hidden transition-all duration-500 ease-in-out"></section>
     </main>
 
     <div id="floatingCart" class="fixed bottom-0 left-0 w-full p-4 bg-ivory bg-opacity-90 backdrop-blur-md border-t border-lightBeige hidden z-40">
@@ -104,9 +109,7 @@
 
                 <div class="border-t border-lightBeige pt-6">
                     <h3 class="text-sm font-bold text-taupe uppercase tracking-wider mb-3">Metode Pembayaran</h3>
-                    
                     <input type="hidden" id="paymentMethod" value="QRIS">
-
                     <div class="mb-4 bg-white p-5 rounded-xl border border-lightBeige shadow-sm text-center">
                         <p class="text-sm font-bold text-primary mb-2">QRIS</p>
                         <p class="text-xs text-secondary leading-relaxed">Silakan klik tombol konfirmasi di bawah untuk meminta kode QRIS melalui WhatsApp.</p>
@@ -135,7 +138,6 @@
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygdcHwVBz0ihp3cYKqd1wf7NFK6h0OMYd-O95bkWpCgwP7Xb8taQKMZSX15ovy3cz8mA/exec';
     const NOMOR_WA_CAFE = '628213904471'; 
 
-    // DATA MENU: URL ini akan kita ganti dengan URL dari GitHub nanti
     const menuData = [
         { category: 'Kintoun Signature', items: [
             { id: 'S1', name: 'Kopi Susu Kintoun', price: 14900, img: 'https://github.com/muafi-learner/kintoun-order-system-deilvery/blob/main/Kopi%20Susu%20Kintoun.png?raw=true' },
@@ -156,22 +158,40 @@
     let cart = {}; 
     let activeIceLevels = {}; 
 
-    function toggleAddress() {
-        const orderType = document.querySelector('input[name="orderType"]:checked').value;
-        const addressContainer = document.getElementById('addressContainer');
-        const addressInput = document.getElementById('custAddress');
+    // --- LOGIC GATEKEEPER (Lanjutkan Pilih Menu) ---
+    function proceedToMenu() {
+        const name = document.getElementById('custName').value.trim();
+        const wa = document.getElementById('custWA').value.trim();
+        const pickup = document.getElementById('pickUpMethod').value;
 
-        if (orderType === 'In Person') {
-            addressContainer.style.display = 'none';
-            addressInput.value = 'Ambil Sendiri di Toko (In Person)';
-        } else {
-            addressContainer.style.display = 'block';
-            if(addressInput.value === 'Ambil Sendiri di Toko (In Person)') {
-                addressInput.value = '';
-            }
+        // Validasi
+        if (!name || !wa || !pickup) {
+            alert('Mohon isi Nama Lengkap, Nomor WhatsApp, dan Metode Pick Up terlebih dahulu kak.');
+            return;
         }
+
+        // Tampilkan Popup Edukasi Es
+        alert('Es akan dimasukkan ke cup ketika person/delivery sudah sampai di lokasi yaaa.... Jadi tolong tunggu 5-10 menit di lokasi ya kak!');
+
+        // Kunci Form Input agar tidak berubah
+        document.getElementById('custName').disabled = true;
+        document.getElementById('custWA').disabled = true;
+        document.getElementById('pickUpMethod').disabled = true;
+        
+        // Sembunyikan tombol "Lanjutkan"
+        document.getElementById('btnLanjutkan').classList.add('hidden');
+
+        // Tampilkan List Menu
+        const menuContainer = document.getElementById('menuContainer');
+        menuContainer.classList.remove('hidden');
+        
+        // Scroll halus ke arah menu
+        setTimeout(() => {
+            menuContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     }
 
+    // --- RENDER MENU ---
     function renderMenu() {
         const container = document.getElementById('menuContainer');
         let html = '';
@@ -182,7 +202,6 @@
             cat.items.forEach(item => {
                 activeIceLevels[item.id] = 'Normal Ice';
 
-                // PERUBAHAN LAYOUT: Gambar di Kiri (w-24), Konten di Kanan (flex-1)
                 html += `
                 <div class="bg-white p-3 sm:p-4 rounded-[20px] shadow-sm border border-lightBeige flex items-center space-x-3 sm:space-x-4 group">
                     <img src="${item.img}" alt="${item.name}" loading="lazy" class="w-20 sm:w-24 h-28 sm:h-32 object-contain flex-shrink-0 drop-shadow-sm">
@@ -292,12 +311,10 @@
     }
 
     function openCartModal() {
-        if (!document.getElementById('custName').value || !document.getElementById('custWA').value || !document.getElementById('custAddress').value) {
-            alert('Mohon lengkapi Informasi Pengiriman / Pengambilan terlebih dahulu.'); 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
+        // Pengecekan ulang sebagai pengaman
+        if (!document.getElementById('custName').value || !document.getElementById('custWA').value || !document.getElementById('pickUpMethod').value) {
+            alert('Data pemesan tidak lengkap.'); return;
         }
-        
         renderCartModalItems();
         document.getElementById('cartModal').classList.remove('hidden');
         document.getElementById('cartModal').classList.add('flex');
@@ -335,7 +352,7 @@
 
     async function submitOrder() {
         const method = document.getElementById('paymentMethod').value;
-        const orderType = document.querySelector('input[name="orderType"]:checked').value;
+        const pickupMethod = document.getElementById('pickUpMethod').value;
 
         document.getElementById('loadingOverlay').classList.remove('hidden');
         document.getElementById('loadingOverlay').classList.add('flex');
@@ -355,7 +372,7 @@
             action: 'new_order',
             name: document.getElementById('custName').value,
             wa: document.getElementById('custWA').value,
-            address: document.getElementById('custAddress').value,
+            address: pickupMethod, // Menggunakan kolom address di Google Sheet untuk menyimpan data Pick Up
             cart: cartArray,
             total: totalPesanan,
             paymentMethod: method,
@@ -370,7 +387,8 @@
             const result = await response.json();
             
             if (result.status === 'success') {
-                let waText = `Halo Kintoun Coffee!\nSaya sudah melakukan order via Web dengan detail:\n\nNama: ${payload.name}\nAlamat: ${payload.address}\n\nPesanan:\n${orderDetailsWA}\n\nTotal: Rp ${payload.total.toLocaleString('id-ID')}\nMetode: ${payload.paymentMethod}\nPick Up: ${orderType}\n\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
+                // Teks WA yang dirapikan tanpa alamat
+                let waText = `Halo Kintoun Coffee!\nSaya sudah melakukan order via Web dengan detail:\n\nNama: ${payload.name}\nPick Up: ${payload.address}\n\nPesanan:\n${orderDetailsWA}\n\nTotal: Rp ${payload.total.toLocaleString('id-ID')}\nMetode: ${payload.paymentMethod}\n\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
                 
                 const waUrl = `https://wa.me/${NOMOR_WA_CAFE}?text=${encodeURIComponent(waText)}`;
                 
