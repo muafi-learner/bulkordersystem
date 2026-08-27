@@ -69,18 +69,37 @@
         <p class="font-bold text-ivory tracking-wide">Memperbarui Status...</p>
     </div>
 
+    <!-- CUSTOM CONFIRMATION MODAL -->
+    <div id="customConfirmModal" class="fixed inset-0 bg-primary bg-opacity-70 backdrop-blur-sm hidden flex-col justify-center items-center z-[70] px-4 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-xl border border-lightBeige w-full max-w-sm overflow-hidden transform transition-all">
+            <div class="p-6">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="bg-secondary bg-opacity-10 p-2 rounded-full text-secondary">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-primary">Konfirmasi Status</h3>
+                </div>
+                <p id="confirmMessage" class="text-secondary text-sm font-medium leading-relaxed"></p>
+            </div>
+            <div class="bg-ivory px-6 py-4 flex justify-end space-x-3 border-t border-lightBeige">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 rounded-xl text-sm font-bold text-taupe hover:bg-lightBeige transition">Batal</button>
+                <button id="btnConfirmAction" class="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-ivory hover:bg-secondary transition shadow-md">Ya, Ubah Status</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     // --- KONFIGURASI PENTING ---
-    // PASTIKAN ANDA MENGGANTI URL INI DENGAN URL WEB APP GAS ANDA!
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygdcHwVBz0ihp3cYKqd1wf7NFK6h0OMYd-O95bkWpCgwP7Xb8taQKMZSX15ovy3cz8mA/exec';
     
     let knownOrdersCount = 0; 
     let audioContext = null;
+    let pendingAction = null; // Variabel penyimpan data untuk modal
 
     // --- FUNGSI NOTIFIKASI SUARA ---
     function enableAudio(element) {
         if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        element.style.display = 'none'; // Sembunyikan banner setelah diklik
+        element.style.display = 'none';
     }
 
     function playDing() {
@@ -94,7 +113,7 @@
         gainNode.connect(audioContext.destination);
         
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(850, audioContext.currentTime); // Nada modern
+        oscillator.frequency.setValueAtTime(850, audioContext.currentTime); 
         
         gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4); 
@@ -212,25 +231,47 @@
         }
     }
 
-    // Fungsi Update Status yang baru
-    async function updateStatus(orderId, newStatus, customerWA, customerName) {
-        if(!confirm(`Ubah status pesanan ${orderId} menjadi "${newStatus}"?`)) return;
-    
+    // --- FUNGSI TUTUP MODAL ---
+    function closeConfirmModal() {
+        document.getElementById('customConfirmModal').classList.add('hidden');
+        document.getElementById('customConfirmModal').classList.remove('flex');
+        pendingAction = null;
+    }
+
+    // --- FUNGSI PEMICU MODAL (Menggantikan confirm bawaan browser) ---
+    function updateStatus(orderId, newStatus, customerWA, customerName) {
+        const modal = document.getElementById('customConfirmModal');
+        const message = document.getElementById('confirmMessage');
+        
+        message.innerHTML = `Ubah status pesanan <span class="font-bold text-primary">${orderId}</span> menjadi <span class="font-bold text-primary">"${newStatus}"</span>?`;
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        pendingAction = { orderId, newStatus, customerWA, customerName };
+        
+        document.getElementById('btnConfirmAction').onclick = function() {
+            closeConfirmModal();
+            if(pendingAction) {
+                executeStatusUpdate(pendingAction.orderId, pendingAction.newStatus, pendingAction.customerWA, pendingAction.customerName);
+            }
+        };
+    }
+
+    // --- FUNGSI EKSEKUSI DATA API ---
+    async function executeStatusUpdate(orderId, newStatus, customerWA, customerName) {
         document.getElementById('loadingOverlay').classList.remove('hidden');
         document.getElementById('loadingOverlay').classList.add('flex');
     
         try {
-            // 1. Kirim update ke Google Apps Script (Kode Aslimu)
             const payload = { action: 'update_status', orderId: orderId, newStatus: newStatus };
             const response = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
             const result = await response.json();
     
             if (result.status === 'success') {
                 
-                // 2. Kirim Notifikasi ke n8n KHUSUS saat pesanan diproses
                 if (newStatus === 'Sedang Diproses' && customerWA) {
                     
-                    // Mencegah error angka 0 dari Google Sheets
                     let formattedWA = String(customerWA).trim();
                     if (formattedWA.startsWith('0')) {
                         formattedWA = '62' + formattedWA.substring(1);
@@ -245,7 +286,6 @@
                         nama: customerName
                     };
     
-                    // TEMPELKAN TEST URL WEBHOOK n8n KAMU DI SINI:
                     fetch('https://n8n-h238.srv1866922.hstgr.cloud/webhook/2a879bc5-5932-4f9b-9a7e-8609a4118aaf', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -267,7 +307,6 @@
 
     // --- INISIALISASI ---
     function initDashboard() {
-        // Klik di manapun untuk inisiasi Web Audio API (Kebijakan browser)
         document.body.addEventListener('click', () => {
             if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }, { once: true });
