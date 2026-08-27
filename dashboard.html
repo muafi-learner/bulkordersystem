@@ -129,7 +129,8 @@
         statusBadge.className = 'text-xs font-bold tracking-wider uppercase bg-taupe text-white px-3 py-1.5 rounded-full shadow-sm';
 
         try {
-            const response = await fetch(GAS_WEB_APP_URL);
+            // Tambahkan ?t=... dan cache: 'no-store' agar browser tidak menggunakan data basi
+            const response = await fetch(GAS_WEB_APP_URL + '?t=' + new Date().getTime(), { cache: 'no-store' });
             const orders = await response.json();
             
             const reversedOrders = orders.reverse();
@@ -259,6 +260,7 @@
     }
 
     // --- FUNGSI EKSEKUSI DATA API ---
+    // --- FUNGSI EKSEKUSI DATA API ---
     async function executeStatusUpdate(orderId, newStatus, customerWA, customerName) {
         document.getElementById('loadingOverlay').classList.remove('hidden');
         document.getElementById('loadingOverlay').classList.add('flex');
@@ -286,14 +288,19 @@
                         nama: customerName
                     };
     
-                    fetch('https://n8n-h238.srv1866922.hstgr.cloud/webhook-test/pesanan-diproses-kak', {
+                    // URL sudah diperbaiki menjadi /webhook/ (bukan webhook-test)
+                    fetch('https://n8n-h238.srv1866922.hstgr.cloud/webhook/pesanan-diproses-kak', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(n8nPayload)
                     }).catch(e => console.error("Gagal kirim trigger ke n8n:", e));
                 }
     
-                await fetchOrders(); 
+                // Jeda 1.5 detik agar Google Sheets selesai menyimpan data
+                setTimeout(() => {
+                    fetchOrders(); 
+                }, 1500);
+                
             } else {
                 alert('Gagal update status server.');
             }
@@ -304,7 +311,7 @@
             document.getElementById('loadingOverlay').classList.remove('flex');
         }
     }
-
+    
     // --- INISIALISASI ---
     function initDashboard() {
         document.body.addEventListener('click', () => {
