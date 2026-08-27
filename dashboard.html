@@ -90,6 +90,7 @@
 
 <script>
     // --- KONFIGURASI PENTING ---
+    // INI URL TERBARUMU YANG SUDAH DIMASUKKAN!
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxq9-8nvAw_0_hk3aDciquncN9kOWjhYXrAmi7JL2Jp6Z_BVuYu-II_28xMzP-Ng0vpCg/exec';
     
     let knownOrdersCount = 0; 
@@ -129,7 +130,6 @@
         statusBadge.className = 'text-xs font-bold tracking-wider uppercase bg-taupe text-white px-3 py-1.5 rounded-full shadow-sm';
 
         try {
-            // Tambahkan ?t=... dan cache: 'no-store' agar browser tidak menggunakan data basi
             const response = await fetch(GAS_WEB_APP_URL + '?t=' + new Date().getTime(), { cache: 'no-store' });
             const orders = await response.json();
             
@@ -223,9 +223,7 @@
         if(activeOrdersCount === 0) {
             container.innerHTML = `
             <div class="col-span-full flex flex-col items-center justify-center py-20">
-                <svg class="w-16 h-16 text-lightBeige mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                 <p class="text-secondary font-semibold">Belum ada pesanan aktif.</p>
-                <p class="text-taupe text-sm mt-1">Duduk santai, kami akan memberi tahu jika ada pesanan masuk.</p>
             </div>`;
         } else {
             container.innerHTML = html;
@@ -239,7 +237,7 @@
         pendingAction = null;
     }
 
-    // --- FUNGSI PEMICU MODAL (Menggantikan confirm bawaan browser) ---
+    // --- FUNGSI PEMICU MODAL ---
     function updateStatus(orderId, newStatus, customerWA, customerName) {
         const modal = document.getElementById('customConfirmModal');
         const message = document.getElementById('confirmMessage');
@@ -299,7 +297,6 @@
                     .catch(e => console.error("Gagal kirim trigger ke n8n:", e));
                 }
     
-                // JEDA DITAMBAH JADI 3 DETIK agar Google Sheets selesai memproses data
                 setTimeout(() => {
                     fetchOrders(); 
                     document.getElementById('loadingOverlay').classList.add('hidden');
@@ -307,7 +304,8 @@
                 }, 3000);
                 
             } else {
-                alert('Gagal update status server. Cek Google Apps Script.');
+                // SEKARANG ERRORNYA AKAN MUNCUL JELAS JIKA MASIH GAGAL!
+                alert('Gagal update status server. Laporan Script: ' + (result.message || 'Tidak diketahui'));
                 document.getElementById('loadingOverlay').classList.add('hidden');
                 document.getElementById('loadingOverlay').classList.remove('flex');
             }
