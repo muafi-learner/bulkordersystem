@@ -90,7 +90,7 @@
 
 <script>
     // --- KONFIGURASI PENTING ---
-    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygdcHwVBz0ihp3cYKqd1wf7NFK6h0OMYd-O95bkWpCgwP7Xb8taQKMZSX15ovy3cz8mA/exec';
+    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx42UpO8viojliGkqgv3v_0fo2aWyEUlIQg2vwnjUUYw8hX9PSJGHnKmi96ONbaGreezw/exec';
     
     let knownOrdersCount = 0; 
     let audioContext = null;
@@ -215,7 +215,7 @@
                     
                     ${order.status === 'Pesanan Masuk' ? `<button onclick="updateStatus('${order.id}', 'Sedang Diproses', '${order.wa}', '${order.name}')" class="w-full bg-primary text-ivory py-3 rounded-xl text-sm font-bold hover:bg-secondary transition shadow-md">Proses Pesanan</button>` : ''}
                     
-                    ${order.status === 'Sedang Diproses' ? `<button onclick="updateStatus('${order.id}', 'Selesai')" class="w-full bg-secondary text-ivory py-3 rounded-xl text-sm font-bold hover:bg-primary transition shadow-md">Tandai Selesai & Kirim</button>` : ''}
+                    ${order.status === 'Sedang Diproses' ? `<button onclick="updateStatus('${order.id}', 'Selesai', '${order.wa}', '${order.name}')" class="w-full bg-secondary text-ivory py-3 rounded-xl text-sm font-bold hover:bg-primary transition shadow-md">Tandai Selesai & Kirim</button>` : ''}
                 </div>
             </div>`;
         });
