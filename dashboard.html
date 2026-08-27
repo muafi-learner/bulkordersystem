@@ -193,7 +193,7 @@
                 <div class="p-5 bg-white border-t border-lightBeige space-y-3">
                     ${order.payment === 'Transfer BCA' && order.proofUrl ? `<a href="${order.proofUrl}" target="_blank" class="block w-full text-center bg-transparent border-2 border-secondary text-secondary py-2.5 rounded-xl text-sm font-bold hover:bg-secondary hover:text-ivory transition">Lihat Bukti Transfer</a>` : ''}
                     
-                    ${order.status === 'Pesanan Masuk' ? `<button onclick="updateStatus('${order.id}', 'Sedang Diproses')" class="w-full bg-primary text-ivory py-3 rounded-xl text-sm font-bold hover:bg-secondary transition shadow-md">Proses Pesanan</button>` : ''}
+                    ${order.status === 'Pesanan Masuk' ? `<button onclick="updateStatus('${order.id}', 'Sedang Diproses', '${order.wa}', '${order.name}')" class="w-full bg-primary text-ivory py-3 rounded-xl text-sm font-bold hover:bg-secondary transition shadow-md">Proses Pesanan</button>` : ''}
                     
                     ${order.status === 'Sedang Diproses' ? `<button onclick="updateStatus('${order.id}', 'Selesai')" class="w-full bg-secondary text-ivory py-3 rounded-xl text-sm font-bold hover:bg-primary transition shadow-md">Tandai Selesai & Kirim</button>` : ''}
                 </div>
@@ -212,19 +212,47 @@
         }
     }
 
-    // --- FUNGSI UPDATE STATUS ---
-    async function updateStatus(orderId, newStatus) {
+    // Fungsi Update Status yang baru
+    async function updateStatus(orderId, newStatus, customerWA, customerName) {
         if(!confirm(`Ubah status pesanan ${orderId} menjadi "${newStatus}"?`)) return;
-
+    
         document.getElementById('loadingOverlay').classList.remove('hidden');
         document.getElementById('loadingOverlay').classList.add('flex');
-
+    
         try {
+            // 1. Kirim update ke Google Apps Script (Kode Aslimu)
             const payload = { action: 'update_status', orderId: orderId, newStatus: newStatus };
             const response = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
             const result = await response.json();
-            
+    
             if (result.status === 'success') {
+                
+                // 2. Kirim Notifikasi ke n8n KHUSUS saat pesanan diproses
+                if (newStatus === 'Sedang Diproses' && customerWA) {
+                    
+                    // Mencegah error angka 0 dari Google Sheets
+                    let formattedWA = String(customerWA).trim();
+                    if (formattedWA.startsWith('0')) {
+                        formattedWA = '62' + formattedWA.substring(1);
+                    } else if (!formattedWA.startsWith('62')) {
+                        formattedWA = '62' + formattedWA;
+                    }
+                    
+                    const n8nPayload = {
+                        orderId: orderId,
+                        status: newStatus,
+                        nomor_wa: formattedWA,
+                        nama: customerName
+                    };
+    
+                    // TEMPELKAN TEST URL WEBHOOK n8n KAMU DI SINI:
+                    fetch('https://n8n-h238.srv1866922.hstgr.cloud/webhook-test/2a879bc5-5932-4f9b-9a7e-8609a4118aaf', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(n8nPayload)
+                    }).catch(e => console.error("Gagal kirim trigger ke n8n:", e));
+                }
+    
                 await fetchOrders(); 
             } else {
                 alert('Gagal update status server.');
