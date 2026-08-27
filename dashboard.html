@@ -260,7 +260,6 @@
     }
 
     // --- FUNGSI EKSEKUSI DATA API ---
-    // --- FUNGSI EKSEKUSI DATA API ---
     async function executeStatusUpdate(orderId, newStatus, customerWA, customerName) {
         document.getElementById('loadingOverlay').classList.remove('hidden');
         document.getElementById('loadingOverlay').classList.add('flex');
@@ -273,7 +272,6 @@
             if (result.status === 'success') {
                 
                 if (newStatus === 'Sedang Diproses' && customerWA) {
-                    
                     let formattedWA = String(customerWA).trim();
                     if (formattedWA.startsWith('0')) {
                         formattedWA = '62' + formattedWA.substring(1);
@@ -288,25 +286,34 @@
                         nama: customerName
                     };
     
-                    // URL sudah diperbaiki menjadi /webhook/ (bukan webhook-test)
+                    // Mengirim ke n8n
                     fetch('https://n8n-h238.srv1866922.hstgr.cloud/webhook/pesanan-diproses-kak', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json' 
+                        },
                         body: JSON.stringify(n8nPayload)
-                    }).catch(e => console.error("Gagal kirim trigger ke n8n:", e));
+                    })
+                    .then(res => console.log("Sukses terkirim ke n8n!", res))
+                    .catch(e => console.error("Gagal kirim trigger ke n8n:", e));
                 }
     
-                // Jeda 1.5 detik agar Google Sheets selesai menyimpan data
+                // JEDA DITAMBAH JADI 3 DETIK agar Google Sheets selesai memproses data
                 setTimeout(() => {
                     fetchOrders(); 
-                }, 1500);
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                    document.getElementById('loadingOverlay').classList.remove('flex');
+                }, 3000);
                 
             } else {
-                alert('Gagal update status server.');
+                alert('Gagal update status server. Cek Google Apps Script.');
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                document.getElementById('loadingOverlay').classList.remove('flex');
             }
         } catch (error) {
-            alert('Terjadi kesalahan koneksi.');
-        } finally {
+            console.error("Error Detail:", error);
+            alert('Terjadi kesalahan koneksi atau error pada script Google.');
             document.getElementById('loadingOverlay').classList.add('hidden');
             document.getElementById('loadingOverlay').classList.remove('flex');
         }
