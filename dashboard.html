@@ -230,7 +230,7 @@
             };
     
             // 3. Tembak LANGSUNG ke n8n Test (Pakai jubah text/plain biar lolos razia CORS browser)
-            const response = await fetch('https://n8n-h238.srv1866922.hstgr.cloud/webhook-test/pesanan-diproses-kak', {
+            const response = await fetch('https://n8n-h238.srv1866922.hstgr.cloud/webhook/pesanan-diproses-kak', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'text/plain' // INI KUNCI UTAMANYA! Hapus application/json
