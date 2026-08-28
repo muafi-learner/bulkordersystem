@@ -443,7 +443,7 @@
             });
             
             if (response.ok) {
-                let waText = `Halo Kintoun Coffee!\nSaya sudah melakukan order via Web dengan detail:\n\nID: ${payload.orderId}\nNama: ${payload.name}\nPick Up: ${payload.address}\n\nPesanan:\n${orderDetailsWA}\n\nTotal: Rp ${payload.total.toLocaleString('id-ID')}\nMetode: ${payload.paymentMethod}\n\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
+                let waText = `Halo Kak!\nAku udah order via web ya.... Ini detailnya:\n\nNama: ${payload.name}\nPick Up: ${payload.address}\n\nPesanan:\n${orderDetailsWA}\n\nTotal: Rp ${payload.total.toLocaleString('id-ID')}\nMetode: ${payload.paymentMethod}\n\n_Aku minta kode QRIS untuk pembayaran pesanan ini ya...._`;
                 const waUrl = `https://wa.me/${NOMOR_WA_CAFE}?text=${encodeURIComponent(waText)}`;
                 window.location.href = waUrl;
             } else {
