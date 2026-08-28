@@ -210,16 +210,18 @@
         };
     }
 
+    // --- FUNGSI EKSEKUSI DATA (FULL N8N, BYPASS GOOGLE SCRIPT) ---
     async function executeStatusUpdate(orderId, newStatus, customerWA, customerName) {
         document.getElementById('loadingOverlay').classList.remove('hidden');
         document.getElementById('loadingOverlay').classList.add('flex');
     
         try {
+            // 1. Rapikan Nomor WA
             let formattedWA = String(customerWA).trim();
             if (formattedWA.startsWith('0')) formattedWA = '62' + formattedWA.substring(1);
             else if (!formattedWA.startsWith('62')) formattedWA = '62' + formattedWA;
             
-            // Siapkan payload khusus untuk n8n
+            // 2. Siapkan Data untuk dilempar ke n8n
             const n8nPayload = { 
                 orderId: orderId, 
                 status: newStatus, 
@@ -227,24 +229,31 @@
                 nama: customerName 
             };
     
-            // Tembak instruksi langsung ke server n8n Hostinger
+            // 3. Tembak LANGSUNG ke n8n Test (tanpa lewat Google Script)
             const response = await fetch('https://n8n-h238.srv1866922.hstgr.cloud/webhook-test/pesanan-diproses-kak', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json' 
+                },
                 body: JSON.stringify(n8nPayload)
             });
             
             if (response.ok) {
+                // Kalau n8n sukses menerima, tutup loading
                 setTimeout(() => {
-                    fetchOrders(); 
                     document.getElementById('loadingOverlay').classList.add('hidden');
                     document.getElementById('loadingOverlay').classList.remove('flex');
-                }, 2000);
+                    // Catatan: fetchOrders() kita skip dulu sementara biar layarnya gak kedip
+                    alert("Sukses! Cek layar n8n kamu sekarang.");
+                }, 1000);
             } else {
-                throw new Error("n8n gagal memproses pembaruan.");
+                alert("Gagal terhubung ke pintu n8n. Cek URL n8n.");
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                document.getElementById('loadingOverlay').classList.remove('flex');
             }
         } catch (error) {
-            alert('Gagal update: ' + error.message);
+            alert('Error sistem (kemungkinan CORS): ' + error.message);
             document.getElementById('loadingOverlay').classList.add('hidden');
             document.getElementById('loadingOverlay').classList.remove('flex');
         }
