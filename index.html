@@ -404,65 +404,61 @@
         document.getElementById('qrisPopup').classList.remove('flex');
     }
 
+    // GANTI DENGAN URL WEBHOOK N8N POST CREATE ORDER KAMU
+    const N8N_CREATE_ORDER_URL = 'https://n8n-h238.srv1866922.hstgr.cloud/webhook/create-order'; 
+    const NOMOR_WA_CAFE = '628213904471'; 
+    
     async function submitOrder() {
         closeQRISPopup(); 
-
+    
         const method = 'QRIS'; 
         const pickupMethod = document.getElementById('pickUpMethod').value;
-
         document.getElementById('loadingOverlay').classList.remove('hidden');
         document.getElementById('loadingOverlay').classList.add('flex');
-
+    
         let cartArray = Object.values(cart);
         let totalPesanan = cartArray.reduce((sum, item) => sum + (item.price * item.qty), 0);
-
+    
         let orderDetailsWA = cartArray.map(item => {
-            if(item.iceLevel === 'Normal Ice') {
-                return `• ${item.name} x${item.qty}`;
-            } else {
-                return `• ${item.name} (${item.iceLevel}) x${item.qty}`;
-            }
+            return item.iceLevel === 'Normal Ice' ? `• ${item.name} x${item.qty}` : `• ${item.name} (${item.iceLevel}) x${item.qty}`;
         }).join('\n');
-
+    
+        // Generate ID & Waktu karena GAS sudah tidak ada
+        const orderId = 'INV-' + Math.floor(100000 + Math.random() * 900000);
+        const waktu = new Date().toLocaleString('id-ID');
+    
         const payload = {
-            action: 'new_order',
+            orderId: orderId,
+            waktu: waktu,
             name: document.getElementById('custName').value,
             wa: document.getElementById('custWA').value,
-            address: pickupMethod, 
-            cart: cartArray,
+            address: pickupMethod,
+            orders: orderDetailsWA,
             total: totalPesanan,
             paymentMethod: method,
-            fileBase64: null 
+            status: "Pesanan Masuk"
         };
-
+    
         try {
-            const response = await fetch(GAS_WEB_APP_URL, {
+            const response = await fetch(N8N_CREATE_ORDER_URL, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            const result = await response.json();
-
-            if (result.status === 'success') {
-                let waText = `Halo Kintoun Coffee!\nSaya sudah melakukan order via Web dengan detail:\n\nNama: ${payload.name}\nPick Up: ${payload.address}\n\nPesanan:\n${orderDetailsWA}\n\nTotal: Rp ${payload.total.toLocaleString('id-ID')}\nMetode: ${payload.paymentMethod}\n\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
-
+            
+            if (response.ok) {
+                let waText = `Halo Kintoun Coffee!\nSaya sudah melakukan order via Web dengan detail:\n\nID: ${payload.orderId}\nNama: ${payload.name}\nPick Up: ${payload.address}\n\nPesanan:\n${orderDetailsWA}\n\nTotal: Rp ${payload.total.toLocaleString('id-ID')}\nMetode: ${payload.paymentMethod}\n\n_Mohon berikan kode QRIS untuk pembayaran pesanan ini._`;
                 const waUrl = `https://wa.me/${NOMOR_WA_CAFE}?text=${encodeURIComponent(waText)}`;
-
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                document.getElementById('loadingOverlay').classList.remove('flex');
-
                 window.location.href = waUrl;
             } else {
-                 showCustomAlert('Terjadi kesalahan pada server Google. Silakan coba lagi.');
-                 document.getElementById('loadingOverlay').classList.add('hidden');
-                 document.getElementById('loadingOverlay').classList.remove('flex');
+                 throw new Error("Gagal kirim ke n8n");
             }
         } catch (error) {
-            showCustomAlert('Terjadi kesalahan koneksi. Pastikan internet Kakak stabil ya.');
+            showCustomAlert('Terjadi kesalahan koneksi ke server n8n.');
             document.getElementById('loadingOverlay').classList.add('hidden');
             document.getElementById('loadingOverlay').classList.remove('flex');
         }
     }
-
     renderMenu();
 </script>
 </body>
