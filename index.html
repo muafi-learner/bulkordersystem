@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kintoun Coffee - Delivery Order</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -43,14 +43,14 @@
     </header>
 
     <main class="max-w-md mx-auto px-5 relative z-20 -mt-0 sm:-mt-6">
-        
+
         <section id="formSection" class="scroll-mt-10 pb-6">
             <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl border border-lightBeige space-y-6">
-                
+
                 <div>
                     <input type="text" id="custName" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-primary text-sm font-medium disabled:opacity-50 disabled:bg-gray-50" placeholder="Nama Lengkap">
                 </div>
-                
+
                 <div>
                     <input type="number" id="custWA" class="w-full bg-transparent border-b border-lightBeige focus:border-primary py-2 outline-none transition placeholder-coolGrey text-primary text-sm font-medium disabled:opacity-50 disabled:bg-gray-50" placeholder="Nomor WhatsApp (Cth: 0812...)">
                 </div>
@@ -92,7 +92,7 @@
 
     <div id="cartModal" class="fixed inset-0 bg-primary bg-opacity-80 backdrop-blur-sm hidden flex-col justify-end z-50 transition-opacity">
         <div class="bg-ivory w-full max-w-md mx-auto h-[85vh] rounded-t-3xl shadow-2xl flex flex-col animate-slide-up relative">
-            
+
             <div class="px-6 py-5 border-b border-lightBeige flex justify-between items-center bg-white rounded-t-3xl">
                 <h2 class="text-lg font-bold text-primary">Detail Pesanan</h2>
                 <button onclick="closeCartModal()" class="text-muted hover:text-primary font-bold p-2">✕</button>
@@ -161,7 +161,8 @@
     </div>
 
 <script>
-    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygdcHwVBz0ihp3cYKqd1wf7NFK6h0OMYd-O95bkWpCgwP7Xb8taQKMZSX15ovy3cz8mA/exec';
+    // MASUKKAN URL WEBHOOK N8N UNTUK MEMBUAT PESANAN (Method POST)
+    const N8N_CREATE_ORDER_URL = 'https://n8n-h238.srv1866922.hstgr.cloud/webhook/create-order'; 
     const NOMOR_WA_CAFE = '628213904471'; 
 
     const menuData = [
@@ -180,11 +181,10 @@
             { id: 'N2', name: 'Choc-Cloud', price: 16800, img: 'https://github.com/muafi-learner/kintoun-delivery-and-self-pickup-order-system/blob/main/Choc-Cloud.png?raw=true' }
         ]}
     ];
-    
+
     let cart = {}; 
     let activeIceLevels = {}; 
 
-    // --- LOGIC KEYBOARD SCROLLING ---
     const inputElements = ['custName', 'custWA', 'pickUpMethod'];
     inputElements.forEach(id => {
         document.getElementById(id).addEventListener('focus', () => {
@@ -404,29 +404,25 @@
         document.getElementById('qrisPopup').classList.remove('flex');
     }
 
-    // GANTI DENGAN URL WEBHOOK N8N POST CREATE ORDER KAMU
-    const N8N_CREATE_ORDER_URL = 'https://n8n-h238.srv1866922.hstgr.cloud/webhook/create-order'; 
-    const NOMOR_WA_CAFE = '628213904471'; 
-    
     async function submitOrder() {
         closeQRISPopup(); 
-    
+
         const method = 'QRIS'; 
         const pickupMethod = document.getElementById('pickUpMethod').value;
         document.getElementById('loadingOverlay').classList.remove('hidden');
         document.getElementById('loadingOverlay').classList.add('flex');
-    
+
         let cartArray = Object.values(cart);
         let totalPesanan = cartArray.reduce((sum, item) => sum + (item.price * item.qty), 0);
-    
+
         let orderDetailsWA = cartArray.map(item => {
             return item.iceLevel === 'Normal Ice' ? `• ${item.name} x${item.qty}` : `• ${item.name} (${item.iceLevel}) x${item.qty}`;
         }).join('\n');
-    
-        // Generate ID & Waktu karena GAS sudah tidak ada
+
+        // Buat ID & Waktu langsung di frontend
         const orderId = 'INV-' + Math.floor(100000 + Math.random() * 900000);
         const waktu = new Date().toLocaleString('id-ID');
-    
+
         const payload = {
             orderId: orderId,
             waktu: waktu,
@@ -438,7 +434,7 @@
             paymentMethod: method,
             status: "Pesanan Masuk"
         };
-    
+
         try {
             const response = await fetch(N8N_CREATE_ORDER_URL, {
                 method: 'POST',
@@ -459,6 +455,7 @@
             document.getElementById('loadingOverlay').classList.remove('flex');
         }
     }
+
     renderMenu();
 </script>
 </body>
