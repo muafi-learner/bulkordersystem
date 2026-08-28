@@ -218,10 +218,14 @@
     document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('btnConfirmAction').addEventListener('click', function() {
             console.log("Tombol konfirmasi YA di-klik!");
-            closeConfirmModal();
+            
+            // 1. Eksekusi fetch dulu selagi data pendingAction masih ada
             if(pendingAction) {
                 executeStatusUpdate(pendingAction.orderId, pendingAction.newStatus, pendingAction.customerWA, pendingAction.customerName);
             }
+            
+            // 2. Baru tutup pop-up (yang akan me-reset pendingAction menjadi null)
+            closeConfirmModal();
         });
     });
 
