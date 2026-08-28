@@ -229,30 +229,29 @@
                 nama: customerName 
             };
     
-            // 3. Tembak LANGSUNG ke n8n Test (Pakai jubah text/plain biar lolos razia CORS browser)
+            // 3. Tembak LANGSUNG ke n8n Production (Format JSON standar)
             const response = await fetch('https://n8n-h238.srv1866922.hstgr.cloud/webhook/pesanan-diproses-kak', {
                 method: 'POST',
                 headers: { 
-                    'Content-Type': 'text/plain' // INI KUNCI UTAMANYA! Hapus application/json
+                    'Content-Type': 'application/json' 
                 },
                 body: JSON.stringify(n8nPayload)
             });
             
             if (response.ok) {
-                // Kalau n8n sukses menerima, tutup loading
                 setTimeout(() => {
                     document.getElementById('loadingOverlay').classList.add('hidden');
                     document.getElementById('loadingOverlay').classList.remove('flex');
-                    // Catatan: fetchOrders() kita skip dulu sementara biar layarnya gak kedip
-                    alert("Sukses! Cek layar n8n kamu sekarang.");
+                    alert("Sukses! Status diperbarui dan WhatsApp terkirim.");
+                    fetchOrders(); // Refresh data otomatis
                 }, 1000);
             } else {
-                alert("Gagal terhubung ke pintu n8n. Cek URL n8n.");
+                alert("Gagal terhubung ke pintu n8n. Status: " + response.status);
                 document.getElementById('loadingOverlay').classList.add('hidden');
                 document.getElementById('loadingOverlay').classList.remove('flex');
             }
         } catch (error) {
-            alert('Error sistem (kemungkinan CORS): ' + error.message);
+            alert('Error sistem: ' + error.message);
             document.getElementById('loadingOverlay').classList.add('hidden');
             document.getElementById('loadingOverlay').classList.remove('flex');
         }
