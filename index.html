@@ -183,7 +183,6 @@
     ];
 
     let cart = {}; 
-    let activeIceLevels = {}; 
 
     const inputElements = ['custName', 'custWA', 'pickUpMethod'];
     inputElements.forEach(id => {
@@ -255,7 +254,7 @@
         <div class="mt-6 mb-2">
             <button onclick="backToForm()" class="text-secondary font-bold text-sm flex items-center hover:text-primary transition outline-none">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                Back
+                Kembali Edit Info Diri
             </button>
         </div>`;
 
@@ -263,7 +262,6 @@
             html += `<h3 class="text-sm font-bold text-lightBeige uppercase tracking-widest mt-8 mb-4">${cat.category}</h3>`;
             html += `<div class="space-y-4">`;
             cat.items.forEach(item => {
-                activeIceLevels[item.id] = 'Normal Ice';
                 html += `
                 <div class="bg-white p-3 sm:p-4 rounded-[20px] shadow-lg border border-transparent flex items-center space-x-3 sm:space-x-4 group">
                     <img src="${item.img}" alt="${item.name}" loading="lazy" class="w-20 sm:w-24 h-28 sm:h-32 object-contain flex-shrink-0 drop-shadow-sm">
@@ -271,9 +269,9 @@
                         <p class="font-extrabold text-primary text-[15px] sm:text-[16px] leading-tight">${item.name}</p>
                         <p class="text-[13px] font-semibold text-secondary mt-1 mb-3">Rp ${item.price.toLocaleString('id-ID')}</p>
                         <div class="flex space-x-1.5 w-full">
-                            <button id="chip_less_${item.id}" onclick="toggleIce('${item.id}', 'Less Ice')" class="ice-chip-${item.id} flex-1 text-[10px] sm:text-[11px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">Less Ice</button>
-                            <button id="chip_no_${item.id}" onclick="toggleIce('${item.id}', 'No Ice')" class="ice-chip-${item.id} flex-1 text-[10px] sm:text-[11px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">No Ice</button>
-                            <button id="btn_add_${item.id}" onclick="addToCart('${item.id}', '${item.name}', ${item.price})" class="flex-[1.2] bg-primary text-ivory text-[11px] sm:text-[12px] font-bold py-2 rounded-lg hover:bg-secondary transition shadow-sm outline-none">Tambah</button>
+                            <button id="chip_less_${item.id}" onclick="addToCart('${item.id}', '${item.name}', ${item.price}, 'Less Ice')" class="flex-1 text-[10px] sm:text-[11px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">Less Ice</button>
+                            <button id="chip_no_${item.id}" onclick="addToCart('${item.id}', '${item.name}', ${item.price}, 'No Ice')" class="flex-1 text-[10px] sm:text-[11px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">No Ice</button>
+                            <button id="btn_add_${item.id}" onclick="addToCart('${item.id}', '${item.name}', ${item.price}, 'Normal Ice')" class="flex-[1.2] bg-primary text-ivory text-[11px] sm:text-[12px] font-bold py-2 rounded-lg hover:bg-secondary transition shadow-sm outline-none">Tambah</button>
                         </div>
                     </div>
                 </div>`;
@@ -283,35 +281,7 @@
         container.innerHTML = html;
     }
 
-    function toggleIce(itemId, selectedLevel) {
-        let currentLevel = activeIceLevels[itemId];
-
-        document.querySelectorAll(`.ice-chip-${itemId}`).forEach(chip => {
-            chip.classList.remove('bg-primary', 'text-ivory', 'border-primary');
-            chip.classList.add('bg-ivory', 'text-taupe', 'border-lightBeige');
-        });
-
-        if (currentLevel === selectedLevel) {
-            activeIceLevels[itemId] = 'Normal Ice'; 
-        } 
-        else {
-            activeIceLevels[itemId] = selectedLevel;
-            let targetChip = selectedLevel === 'Less Ice' ? document.getElementById(`chip_less_${itemId}`) : document.getElementById(`chip_no_${itemId}`);
-            targetChip.classList.remove('bg-ivory', 'text-taupe', 'border-lightBeige');
-            targetChip.classList.add('bg-primary', 'text-ivory', 'border-primary');
-        }
-    }
-
-    function resetIceChips(itemId) {
-        activeIceLevels[itemId] = 'Normal Ice';
-        document.querySelectorAll(`.ice-chip-${itemId}`).forEach(chip => {
-            chip.classList.remove('bg-primary', 'text-ivory', 'border-primary');
-            chip.classList.add('bg-ivory', 'text-taupe', 'border-lightBeige');
-        });
-    }
-
-    function addToCart(id, name, price) {
-        let iceLevel = activeIceLevels[id]; 
+    function addToCart(id, name, price, iceLevel) {
         let cartKey = `${id}_${iceLevel}`;
 
         if (!cart[cartKey]) {
@@ -320,15 +290,33 @@
 
         cart[cartKey].qty += 1;
         updateFloatingCart();
-        resetIceChips(id); 
 
-        const btn = document.getElementById(`btn_add_${id}`);
-        const originalText = btn.innerText;
-        btn.innerText = "✓ Masuk";
-        btn.classList.replace('bg-primary', 'bg-taupe');
+        // Cari tahu tombol mana yang diklik untuk animasi "Masuk"
+        let targetBtnId = iceLevel === 'Less Ice' ? `chip_less_${id}` :
+                          iceLevel === 'No Ice' ? `chip_no_${id}` : `btn_add_${id}`;
+        
+        const targetBtn = document.getElementById(targetBtnId);
+        const originalText = targetBtn.innerText;
+        
+        targetBtn.innerText = "✓ Masuk";
+        
+        // Ubah warna sementara saat diklik
+        if (iceLevel === 'Normal Ice') {
+            targetBtn.classList.replace('bg-primary', 'bg-taupe');
+        } else {
+            targetBtn.classList.replace('bg-ivory', 'bg-taupe');
+            targetBtn.classList.replace('text-taupe', 'text-white');
+        }
+
+        // Kembalikan warna dan teks asli setelah 800ms
         setTimeout(() => {
-            btn.innerText = originalText;
-            btn.classList.replace('bg-taupe', 'bg-primary');
+            targetBtn.innerText = originalText;
+            if (iceLevel === 'Normal Ice') {
+                targetBtn.classList.replace('bg-taupe', 'bg-primary');
+            } else {
+                targetBtn.classList.replace('bg-taupe', 'bg-ivory');
+                targetBtn.classList.replace('text-white', 'text-taupe');
+            }
         }, 800);
     }
 
