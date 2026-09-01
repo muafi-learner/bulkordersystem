@@ -236,34 +236,44 @@
         }, 100);
     }
 
+    function backToForm() {
+        document.getElementById('menuContainer').classList.add('hidden');
+        
+        document.getElementById('custName').disabled = false;
+        document.getElementById('custWA').disabled = false;
+        document.getElementById('pickUpMethod').disabled = false;
+        
+        document.getElementById('btnLanjutkan').classList.remove('hidden');
+        document.getElementById('floatingCart').classList.add('hidden');
+        
+        document.getElementById('formSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     function renderMenu() {
         const container = document.getElementById('menuContainer');
-        let html = '';
+        let html = `
+        <div class="mt-6 mb-2">
+            <button onclick="backToForm()" class="text-secondary font-bold text-sm flex items-center hover:text-primary transition outline-none">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                Kembali Edit Info Diri
+            </button>
+        </div>`;
 
         menuData.forEach(cat => {
             html += `<h3 class="text-sm font-bold text-lightBeige uppercase tracking-widest mt-8 mb-4">${cat.category}</h3>`;
             html += `<div class="space-y-4">`;
             cat.items.forEach(item => {
                 activeIceLevels[item.id] = 'Normal Ice';
-
                 html += `
                 <div class="bg-white p-3 sm:p-4 rounded-[20px] shadow-lg border border-transparent flex items-center space-x-3 sm:space-x-4 group">
                     <img src="${item.img}" alt="${item.name}" loading="lazy" class="w-20 sm:w-24 h-28 sm:h-32 object-contain flex-shrink-0 drop-shadow-sm">
-
                     <div class="flex-1 flex flex-col justify-center">
                         <p class="font-extrabold text-primary text-[15px] sm:text-[16px] leading-tight">${item.name}</p>
                         <p class="text-[13px] font-semibold text-secondary mt-1 mb-3">Rp ${item.price.toLocaleString('id-ID')}</p>
-
                         <div class="flex space-x-1.5 w-full">
-                            <button id="chip_less_${item.id}" onclick="toggleIce('${item.id}', 'Less Ice')" class="ice-chip-${item.id} flex-1 text-[10px] sm:text-[11px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">
-                                Less Ice
-                            </button>
-                            <button id="chip_no_${item.id}" onclick="toggleIce('${item.id}', 'No Ice')" class="ice-chip-${item.id} flex-1 text-[10px] sm:text-[11px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">
-                                No Ice
-                            </button>
-                            <button id="btn_add_${item.id}" onclick="addToCart('${item.id}', '${item.name}', ${item.price})" class="flex-[1.2] bg-primary text-ivory text-[11px] sm:text-[12px] font-bold py-2 rounded-lg hover:bg-secondary transition shadow-sm outline-none">
-                                Tambah
-                            </button>
+                            <button id="chip_less_${item.id}" onclick="toggleIce('${item.id}', 'Less Ice')" class="ice-chip-${item.id} flex-1 text-[10px] sm:text-[11px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">Less Ice</button>
+                            <button id="chip_no_${item.id}" onclick="toggleIce('${item.id}', 'No Ice')" class="ice-chip-${item.id} flex-1 text-[10px] sm:text-[11px] font-bold py-2 rounded-lg bg-ivory text-taupe border border-lightBeige hover:bg-lightBeige transition outline-none">No Ice</button>
+                            <button id="btn_add_${item.id}" onclick="addToCart('${item.id}', '${item.name}', ${item.price})" class="flex-[1.2] bg-primary text-ivory text-[11px] sm:text-[12px] font-bold py-2 rounded-lg hover:bg-secondary transition shadow-sm outline-none">Tambah</button>
                         </div>
                     </div>
                 </div>`;
@@ -360,6 +370,17 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
+
+        let totalItems = 0;
+        Object.values(cart).forEach(item => {
+            totalItems += item.qty;
+        });
+
+        if (totalItems < 15) {
+            showCustomAlert('Mohon maaf Kak, sistem ini khusus Bulk Order dengan minimum pemesanan 15 produk.');
+            return;
+        }
+
         renderCartModalItems();
         document.getElementById('cartModal').classList.remove('hidden');
         document.getElementById('cartModal').classList.add('flex');
