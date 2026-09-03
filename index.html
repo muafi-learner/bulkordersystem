@@ -341,11 +341,22 @@
         });
 
         const floatingCart = document.getElementById('floatingCart');
+        const btnSubmitOrder = document.getElementById('btnSubmitOrder'); // Deklarasi tombol konfirmasi
+
         if (totalItems > 0) {
             floatingCart.classList.remove('hidden');
             document.getElementById('floatingTotalItems').innerText = `${totalItems} Produk`;
             document.getElementById('floatingTotalPrice').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
             document.getElementById('modalTotalPrice').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
+
+            // Validasi Real-time: Matikan tombol jika kurang dari 15
+            if (totalItems < 15) {
+                btnSubmitOrder.disabled = true;
+                btnSubmitOrder.innerText = `Min. 15 Cup (Kurang ${15 - totalItems})`;
+            } else {
+                btnSubmitOrder.disabled = false;
+                btnSubmitOrder.innerText = 'Konfirmasi Pesanan';
+            }
         } else {
             floatingCart.classList.add('hidden');
             closeCartModal(); 
@@ -404,6 +415,15 @@
     }
 
     function showQRISPopup() {
+        // Tambahkan pengecekan ulang sebelum lanjut ke pembayaran
+        let totalItems = 0;
+        Object.values(cart).forEach(item => totalItems += item.qty);
+        
+        if (totalItems < 15) {
+            showCustomAlert('Total pesanan berubah. Minimum pemesanan tetap 15 produk ya Kak.');
+            return; // Menghentikan proses ke pop-up QRIS
+        }
+    
         document.getElementById('qrisPopup').classList.remove('hidden');
         document.getElementById('qrisPopup').classList.add('flex');
     }
